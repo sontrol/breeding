@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS breeding_sys DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE breeding_sys;
+CREATE DATABASE IF NOT EXISTS breeding DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE breeding;
 
 -- ==========================================================
 -- 1. 用户与权限管理 (RBAC)
@@ -229,6 +229,18 @@ CREATE TABLE operation_log (
     ip VARCHAR(50),
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '操作日志表';
+
+-- ==========================================================
+-- 9. AI审计与权限日志
+-- ==========================================================
+CREATE TABLE ai_audit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL COMMENT '发起查询的用户ID',
+    query_content TEXT NOT NULL COMMENT '用户的原始查询内容',
+    accessed_modules VARCHAR(255) COMMENT 'AI访问的模块列表(如: animal, inventory)',
+    response_content TEXT COMMENT 'AI返回的完整内容',
+    query_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '查询时间'
+) COMMENT 'AI助手查询审计日志表';
 
 -- 插入默认管理员数据
 INSERT INTO user (username, password, real_name, status) VALUES ('admin', '$2a$10$7Q9b9Z9b9Z9b9Z9b9Z9b9e9b9Z9b9Z9b9Z9b9Z9b9Z9b9Z9b9Z9b9', '超级管理员', 1);
