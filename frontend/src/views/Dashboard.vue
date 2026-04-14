@@ -1,4 +1,4 @@
-<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="dashboard-container">
     <el-row :gutter="20">
       <el-col :span="6">
@@ -55,16 +55,16 @@ const stats = ref({
   newBornToday: 0,
   sickAndIsolated: 0,
   outThisMonth: 0,
-  statusDistribution: [],
-  chartDates: [],
-  feedingAmounts: [],
-  diseaseCounts: [],
-  outCounts: []
+  statusDistribution: [] as any[],
+  chartDates: [] as string[],
+  feedingAmounts: [] as number[],
+  diseaseCounts: [] as number[],
+  outCounts: [] as number[]
 })
 
 const fetchStats = async () => {
   try {
-    const res = await request.get('/dashboard/stats')
+    const res: any = await request.get('/dashboard/stats')
     if (res.code === 200) {
       stats.value = res.data
       renderCharts()
@@ -78,14 +78,23 @@ const renderCharts = () => {
   // 初始化饼图（动物状态分布）
   const pieChart = echarts.init(pieChartRef.value)
   pieChart.setOption({
-    title: { text: '动物健康状态分布', left: 'center' },
+    title: {
+      text: '动物健康状态分布',
+      left: 'center',
+      top: 0
+    },
     tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', left: 'left' },
+    legend: {
+      top: 32,
+      left: 'center'
+    },
     series: [
       {
         name: '状态',
         type: 'pie',
-        radius: '50%',
+        radius: '55%',
+        top: 88,
+        bottom: 16,
         data: stats.value.statusDistribution,
         emphasis: {
           itemStyle: {
@@ -100,12 +109,26 @@ const renderCharts = () => {
 
   // 初始化折线图（近期事件统计）
   const lineChart = echarts.init(lineChartRef.value)
+  
+  // Format the dates for the line chart display
+  const formattedDates = stats.value.chartDates.map(date => {
+    return date.replace(/-/g, '/')
+  })
+  
   lineChart.setOption({
-    title: { text: '近7天核心事件统计' },
+    title: {
+      text: '近7天核心事件统计',
+      left: 'center',
+      top: 0
+    },
     tooltip: { trigger: 'axis' },
-    legend: { data: ['投喂量(kg)', '发病数', '出栏数'] },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', boundaryGap: false, data: stats.value.chartDates },
+    legend: {
+      data: ['投喂量(kg)', '发病数', '出栏数'],
+      top: 32,
+      left: 'center'
+    },
+    grid: { left: '3%', right: '4%', top: 88, bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', boundaryGap: false, data: formattedDates },
     yAxis: { type: 'value' },
     series: [
       { name: '投喂量(kg)', type: 'line', data: stats.value.feedingAmounts },

@@ -16,7 +16,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
+          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
           <el-button @click="resetQuery" icon="Refresh">重置</el-button>
           <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('animal:add')">新增</el-button>
         </el-form-item>
@@ -40,8 +40,8 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-button size="small" type="primary" link icon="编辑" @click="handleUpdate(scope.row)" v-if="hasPerm('animal:edit')">修改</el-button>
-            <el-button size="small" type="danger" link icon="删除" @click="handle删除(scope.row)" v-if="hasPerm('animal:delete')">删除</el-button>
+            <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('animal:edit')">修改</el-button>
+            <el-button size="small" type="danger" link icon="Delete" @click="handle删除(scope.row)" v-if="hasPerm('animal:delete')">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -91,7 +91,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button type="primary" @click="submitForm">确 定</el-button>
-          <el-button @click="cancel">取 消</el-button>
+          <el-button @click="open = false">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -134,7 +134,7 @@ const rules = {
 }
 
 const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.roles.includes('ROLE_ADMIN')
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const getStatusLabel = (status: number) => {

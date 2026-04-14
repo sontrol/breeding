@@ -16,7 +16,7 @@ public class InventoryController {
     private InventoryService inventoryService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('inventory:list', 'ROLE_ADMIN', 'ROLE_VET', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('inventory:view')")
     public Result<Page<Inventory>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -27,25 +27,25 @@ public class InventoryController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('inventory:query', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('inventory:view')")
     public Result<Inventory> getById(@PathVariable Long id) {
         return Result.success(inventoryService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('inventory:add', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('inventory:add')")
     public Result<Boolean> add(@RequestBody Inventory inventory) {
         return inventoryService.save(inventory) ? Result.success() : Result.error("入库失败");
     }
 
     @PutMapping
-    @PreAuthorize("hasAnyAuthority('inventory:edit', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('inventory:edit')")
     public Result<Boolean> update(@RequestBody Inventory inventory) {
         return inventoryService.updateById(inventory) ? Result.success() : Result.error("修改失败");
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('inventory:delete', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('inventory:delete')")
     public Result<Boolean> delete(@PathVariable Long id) {
         return inventoryService.removeById(id) ? Result.success() : Result.error("删除失败");
     }

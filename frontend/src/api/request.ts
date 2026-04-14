@@ -30,7 +30,7 @@ service.interceptors.response.use(
         useUserStore().logout()
         router.push('/login')
       }
-      return Promise.reject(new 错误(res.msg || '错误'))
+      return Promise.reject(new Error(res.msg || '错误'))
     } else {
       return res
     }

@@ -1,53 +1,68 @@
 {
-  "hash": "f60a0537",
-  "browserHash": "3cc6e00c",
+  "hash": "4b3a8a5e",
+  "browserHash": "86c288be",
   "optimized": {
     "vue": {
       "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
       "file": "vue.js",
-      "fileHash": "dcc85ef8",
+      "fileHash": "d8ad91b9",
       "needsInterop": false
     },
     "vue-router": {
       "src": "../../node_modules/vue-router/dist/vue-router.mjs",
       "file": "vue-router.js",
-      "fileHash": "1ebe3162",
+      "fileHash": "b4402fa0",
       "needsInterop": false
     },
     "pinia": {
       "src": "../../node_modules/pinia/dist/pinia.mjs",
       "file": "pinia.js",
-      "fileHash": "ba31119c",
+      "fileHash": "c26a1e81",
       "needsInterop": false
     },
     "element-plus": {
       "src": "../../node_modules/element-plus/es/index.mjs",
       "file": "element-plus.js",
-      "fileHash": "dad12921",
+      "fileHash": "f74d532c",
       "needsInterop": false
     },
     "axios": {
       "src": "../../node_modules/axios/index.js",
       "file": "axios.js",
-      "fileHash": "77e421de",
+      "fileHash": "85f5a337",
       "needsInterop": false
     },
     "echarts": {
       "src": "../../node_modules/echarts/index.js",
       "file": "echarts.js",
-      "fileHash": "08b06718",
+      "fileHash": "62e1a6d3",
       "needsInterop": false
     },
     "@element-plus/icons-vue": {
       "src": "../../node_modules/@element-plus/icons-vue/dist/index.js",
       "file": "@element-plus_icons-vue.js",
-      "fileHash": "3fe00c3c",
+      "fileHash": "32f2de8d",
+      "needsInterop": false
+    },
+    "dayjs": {
+      "src": "../../node_modules/dayjs/dayjs.min.js",
+      "file": "dayjs.js",
+      "fileHash": "f3bd06c4",
+      "needsInterop": true
+    },
+    "element-plus/es/locale/lang/zh-cn": {
+      "src": "../../node_modules/element-plus/es/locale/lang/zh-cn.mjs",
+      "file": "element-plus_es_locale_lang_zh-cn.js",
+      "fileHash": "b2bd85f5",
       "needsInterop": false
     }
   },
   "chunks": {
     "chunk-AYVSL3LM": {
       "file": "chunk-AYVSL3LM.js"
+    },
+    "chunk-OM56JRPD": {
+      "file": "chunk-OM56JRPD.js"
     },
     "chunk-L5SVTAI7": {
       "file": "chunk-L5SVTAI7.js"

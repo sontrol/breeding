@@ -20,7 +20,7 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('sys:user:list', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('system:view')")
     public Result<Page<User>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -31,14 +31,14 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('sys:user:add', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('system:user:add')")
     public Result<Boolean> add(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userService.save(user) ? Result.success() : Result.error("新增用户失败");
     }
 
     @PutMapping
-    @PreAuthorize("hasAnyAuthority('sys:user:edit', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('system:user:edit')")
     public Result<Boolean> update(@RequestBody User user) {
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -49,7 +49,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('sys:user:delete', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('system:user:delete')")
     public Result<Boolean> delete(@PathVariable Long id) {
         return userService.removeById(id) ? Result.success() : Result.error("删除用户失败");
     }

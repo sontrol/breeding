@@ -12,7 +12,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
+          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
           <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('feeding:plan:add')">新增计划</el-button>
         </el-form-item>
       </el-form>
@@ -30,7 +30,7 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="150">
           <template #default="scope">
-            <el-button size="small" type="primary" link icon="编辑" @click="handleUpdate(scope.row)" v-if="hasPerm('feeding:plan:edit')">修改</el-button>
+            <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('feeding:plan:edit')">修改</el-button>
             <el-button size="small" type="success" link icon="Check" @click="handleExecute(scope.row)" v-if="scope.row.status === 1 && hasPerm('feeding:record:add')">执行投喂</el-button>
           </template>
         </el-table-column>
@@ -117,7 +117,7 @@ const rules = {
 }
 
 const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.roles.includes('ROLE_ADMIN')
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const getList = async () => {
@@ -162,7 +162,7 @@ const handleExecute = (row: any) => {
     confirmButtonText: '确认执行',
     cancelButtonText: '取消',
     inputPattern: /^\d+(\.\d{1,2})?$/,
-    input错误Message: '请输入正确的数字(最多两位小数)'
+    inputErrorMessage: '请输入正确的数字(最多两位小数)'
   }).then(async ({ value }) => {
     const record = {
       planId: row.id,

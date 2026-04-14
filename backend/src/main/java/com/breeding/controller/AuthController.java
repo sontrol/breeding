@@ -43,7 +43,10 @@ public class AuthController {
             data.put("userId", loginUser.getUser().getId());
             data.put("username", loginUser.getUsername());
             data.put("realName", loginUser.getUser().getRealName());
-            data.put("roles", loginUser.getPermissions().stream().filter(p -> p.startsWith("ROLE_")).toList());
+            data.put("roles", loginUser.getPermissions().stream()
+                    .filter(p -> p.startsWith("ROLE_"))
+                    .map(p -> p.substring(5))
+                    .toList());
             data.put("permissions", loginUser.getPermissions().stream().filter(p -> !p.startsWith("ROLE_")).toList());
 
             return Result.success(data);

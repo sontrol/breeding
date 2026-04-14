@@ -22,7 +22,7 @@ public class FeedingController {
 
     // ----- 计划管理 -----
     @GetMapping("/plan/page")
-    @PreAuthorize("hasAnyAuthority('feeding:plan:list', 'ROLE_ADMIN', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('feeding:view')")
     public Result<Page<FeedingPlan>> getPlanPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -32,20 +32,20 @@ public class FeedingController {
     }
 
     @PostMapping("/plan")
-    @PreAuthorize("hasAnyAuthority('feeding:plan:add', 'ROLE_ADMIN', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('feeding:plan:add')")
     public Result<Boolean> addPlan(@RequestBody FeedingPlan plan) {
         return planService.save(plan) ? Result.success() : Result.error("新增计划失败");
     }
 
     @PutMapping("/plan")
-    @PreAuthorize("hasAnyAuthority('feeding:plan:edit', 'ROLE_ADMIN', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('feeding:plan:edit')")
     public Result<Boolean> updatePlan(@RequestBody FeedingPlan plan) {
         return planService.updateById(plan) ? Result.success() : Result.error("修改计划失败");
     }
 
     // ----- 记录管理 -----
     @GetMapping("/record/page")
-    @PreAuthorize("hasAnyAuthority('feeding:record:list', 'ROLE_ADMIN', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('feeding:view')")
     public Result<Page<FeedingRecord>> getRecordPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -55,7 +55,7 @@ public class FeedingController {
     }
 
     @PostMapping("/record")
-    @PreAuthorize("hasAnyAuthority('feeding:record:add', 'ROLE_ADMIN', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('feeding:record:add')")
     public Result<Boolean> addRecord(@RequestBody FeedingRecord record) {
         return recordService.save(record) ? Result.success() : Result.error("新增记录失败");
     }

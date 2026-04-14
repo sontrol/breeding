@@ -18,7 +18,7 @@ public class DashboardController {
     private DashboardService dashboardService;
 
     @GetMapping("/stats")
-    @PreAuthorize("isAuthenticated()") // 所有登录用户均可访问数据看板
+    @PreAuthorize("hasAuthority('dashboard:view')")
     public Result<Map<String, Object>> getDashboardStats() {
         return Result.success(dashboardService.getDashboardStats());
     }

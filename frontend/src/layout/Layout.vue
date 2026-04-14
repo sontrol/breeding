@@ -3,11 +3,11 @@
     <el-aside width="200px">
       <div class="logo">养殖管理系统</div>
       <el-menu :default-active="activeMenu" router background-color="#304156" text-color="#bfcbd9" active-text-color="#409EFF">
-        <el-menu-item index="/dashboard">
+        <el-menu-item index="/dashboard" v-if="hasPerm('dashboard:view')">
           <el-icon><Odometer /></el-icon>
           <span>数据看板</span>
         </el-menu-item>
-        <el-sub-menu index="/animal" v-if="hasRole(['ROLE_ADMIN', 'ROLE_RANCHER', 'ROLE_VET'])">
+        <el-sub-menu index="/animal" v-if="hasPerm('animal:view')">
           <template #title>
             <el-icon><Menu /></el-icon>
             <span>动物管理</span>
@@ -17,7 +17,7 @@
             <span>动物档案</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/feeding" v-if="hasRole(['ROLE_ADMIN', 'ROLE_BREEDER'])">
+        <el-sub-menu index="/feeding" v-if="hasPerm('feeding:view')">
           <template #title>
             <el-icon><Clock /></el-icon>
             <span>饲养管理</span>
@@ -27,7 +27,7 @@
             <span>饲养计划</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/disease" v-if="hasRole(['ROLE_ADMIN', 'ROLE_VET', 'ROLE_BREEDER'])">
+        <el-sub-menu index="/disease" v-if="hasPerm('disease:view')">
           <template #title>
             <el-icon><Warning /></el-icon>
             <span>疾病管理</span>
@@ -37,7 +37,7 @@
             <span>症状上报</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/inventory" v-if="hasRole(['ROLE_ADMIN', 'ROLE_VET', 'ROLE_BREEDER'])">
+        <el-sub-menu index="/inventory" v-if="hasPerm('inventory:view')">
           <template #title>
             <el-icon><Box /></el-icon>
             <span>库存管理</span>
@@ -47,7 +47,7 @@
             <span>库存列表</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/ai" v-if="hasRole(['ROLE_ADMIN', 'ROLE_RANCHER', 'ROLE_VET', 'ROLE_BREEDER'])">
+        <el-sub-menu index="/ai" v-if="hasPerm('ai:view')">
           <template #title>
             <el-icon><Monitor /></el-icon>
             <span>AI 助手</span>
@@ -57,7 +57,7 @@
             <span>智能分析</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/alert" v-if="hasRole(['ROLE_ADMIN', 'ROLE_RANCHER'])">
+        <el-sub-menu index="/alert" v-if="hasPerm('alert:view')">
           <template #title>
             <el-icon><Bell /></el-icon>
             <span>预警系统</span>
@@ -67,7 +67,7 @@
             <span>预警消息</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/system" v-if="hasRole(['ROLE_ADMIN'])">
+        <el-sub-menu index="/system" v-if="hasPerm('system:view')">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>系统管理</span>
@@ -104,8 +104,8 @@ const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
 
-const hasRole = (allowedRoles: string[]) => {
-  return userStore.roles.some(role => allowedRoles.includes(role))
+const hasPerm = (perm: string) => {
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const handleLogout = () => {

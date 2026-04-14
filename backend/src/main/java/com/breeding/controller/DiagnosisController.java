@@ -16,7 +16,7 @@ public class DiagnosisController {
     private DiagnosisService diagnosisService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('disease:list', 'ROLE_ADMIN', 'ROLE_VET')")
+    @PreAuthorize("hasAuthority('disease:view')")
     public Result<Page<Diagnosis>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -27,7 +27,7 @@ public class DiagnosisController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('disease:diagnose', 'ROLE_ADMIN', 'ROLE_VET')")
+    @PreAuthorize("hasAuthority('diagnosis:add')")
     public Result<Boolean> add(@RequestBody Diagnosis diagnosis) {
         return diagnosisService.save(diagnosis) ? Result.success() : Result.error("诊断记录保存失败");
     }

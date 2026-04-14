@@ -18,7 +18,7 @@ public class AnimalController {
     private AnimalService animalService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('animal:list', 'ROLE_ADMIN', 'ROLE_RANCHER')") // 权限控制
+    @PreAuthorize("hasAuthority('animal:view')")
     public Result<Page<Animal>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -29,28 +29,28 @@ public class AnimalController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('animal:query', 'ROLE_ADMIN', 'ROLE_VET')")
+    @PreAuthorize("hasAuthority('animal:view')")
     public Result<Animal> getById(@PathVariable Long id) {
         Animal animal = animalService.getById(id);
         return Result.success(animal);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('animal:add', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('animal:add')")
     public Result<Boolean> add(@RequestBody Animal animal) {
         boolean saved = animalService.save(animal);
         return saved ? Result.success() : Result.error("新增失败");
     }
 
     @PutMapping
-    @PreAuthorize("hasAnyAuthority('animal:edit', 'ROLE_ADMIN', 'ROLE_VET')")
+    @PreAuthorize("hasAuthority('animal:edit')")
     public Result<Boolean> update(@RequestBody Animal animal) {
         boolean updated = animalService.updateById(animal);
         return updated ? Result.success() : Result.error("更新失败");
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('animal:delete', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('animal:delete')")
     public Result<Boolean> delete(@PathVariable Long id) {
         boolean removed = animalService.removeById(id);
         return removed ? Result.success() : Result.error("删除失败");

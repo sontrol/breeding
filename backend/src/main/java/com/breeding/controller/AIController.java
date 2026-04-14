@@ -18,7 +18,7 @@ public class AIController {
     private AIService aiService;
 
     @PostMapping("/chat")
-    @PreAuthorize("isAuthenticated()") // 所有登录用户均可访问AI助手，但AI内部有严格的数据级权限隔离
+    @PreAuthorize("hasAuthority('ai:view')") // 基于明确的权限控制
     public Result<String> chat(@RequestBody ChatDTO request) {
         if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
             return Result.error("查询内容不能为空");

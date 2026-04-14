@@ -1,4 +1,4 @@
-<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
@@ -16,8 +16,8 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
-          <el-button type="warning" @click="handleManualCheck" icon="RefreshRight" v-if="hasPerm('ROLE_ADMIN')" :loading="checking">手动触发检测</el-button>
+          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
+          <el-button type="warning" @click="handleManualCheck" icon="RefreshRight" v-if="hasPerm('alert:check')" :loading="checking">手动触发检测</el-button>
         </el-form-item>
       </el-form>
 
@@ -97,7 +97,7 @@ const queryParams = reactive({
 })
 
 const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.roles.includes('ROLE_ADMIN')
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const getRuleTypeLabel = (type: string) => {
