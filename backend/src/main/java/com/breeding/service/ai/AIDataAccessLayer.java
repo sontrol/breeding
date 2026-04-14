@@ -30,6 +30,12 @@ public class AIDataAccessLayer {
     @Autowired
     private SymptomService symptomService;
 
+    @Autowired
+    private FeedingRecordService feedingRecordService;
+
+    @Autowired
+    private AlertService alertService;
+
     /**
      * 根据当前用户权限，获取AI可分析的上下文数据摘要
      */
@@ -41,7 +47,7 @@ public class AIDataAccessLayer {
         List<String> accessedModules = new ArrayList<>();
 
         // 1. 动物数据访问权限校验
-        if (hasPermission(permissions, "animal:view", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_vet")) {
+        if (hasPermission(permissions, "animal:view", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_vet", "ROLE_feeder")) {
             // 获取简要的动物统计数据供AI分析
             contextData.put("animal_total", animalService.count());
             accessedModules.add("animal");
@@ -63,6 +69,18 @@ public class AIDataAccessLayer {
         if (hasPermission(permissions, "disease:view", "disease:add", "diagnosis:add", "treatment:add", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_vet")) {
             contextData.put("symptom_total", symptomService.count());
             accessedModules.add("disease");
+        }
+
+        // 5. 饲养数据访问权限校验
+        if (hasPermission(permissions, "feeding:view", "feeding:record:add", "feeding:plan:add", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_feeder")) {
+            contextData.put("feeding_record_total", feedingRecordService.count());
+            accessedModules.add("feeding");
+        }
+
+        // 6. 预警数据访问权限校验
+        if (hasPermission(permissions, "alert:view", "alert:handle", "alert:check", "system:*", "ROLE_admin", "ROLE_feeder")) {
+            contextData.put("alert_total", alertService.count());
+            accessedModules.add("alert");
         }
 
         contextData.put("accessedModules", String.join(",", accessedModules));
