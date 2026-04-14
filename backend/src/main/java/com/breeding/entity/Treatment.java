@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("treatment")
@@ -18,7 +21,9 @@ public class Treatment {
     private Long vetId;
     private Long medicineId;
     private BigDecimal dosage;
-    private Date treatmentTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime treatmentTime;
     private String result;
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
 }

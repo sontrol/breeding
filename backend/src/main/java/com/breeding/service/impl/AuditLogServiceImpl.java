@@ -6,7 +6,10 @@ import com.breeding.mapper.AuditLogMapper;
 import com.breeding.service.AuditLogService;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Service
 public class AuditLogServiceImpl extends ServiceImpl<AuditLogMapper, AuditLog> implements AuditLogService {
@@ -18,7 +21,7 @@ public class AuditLogServiceImpl extends ServiceImpl<AuditLogMapper, AuditLog> i
         log.setQueryContent(queryContent);
         log.setAccessedModules(accessedModules);
         log.setResponseContent(responseContent);
-        log.setQueryTime(new Date());
+        log.setQueryTime(LocalDateTime.now());
         this.save(log);
     }
 }

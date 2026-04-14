@@ -12,7 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.util.List;
 
 @Service
@@ -44,9 +47,8 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
     @Override
     @Scheduled(cron = "0 0 2 * * ?")
     public void checkInventoryExpire() {
-        Date now = new Date();
-        long sevenDaysInMillis = 7L * 24 * 3600 * 1000;
-        Date warningDate = new Date(now.getTime() + sevenDaysInMillis);
+        LocalDate today = LocalDate.now();
+        LocalDate warningDate = today.plusDays(7);
 
         List<Inventory> expiringList = inventoryService.list(new LambdaQueryWrapper<Inventory>()
                 .le(Inventory::getExpireDate, warningDate));
@@ -63,7 +65,7 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
                 alert.setRuleType("medicine_expire");
                 alert.setTargetId(item.getId());
                 
-                if (item.getExpireDate().before(now)) {
+                if (item.getExpireDate().isBefore(today)) {
                     alert.setAlertMsg(String.format("物品 [%s] (批次:%s) 已过期！过期时间：%s", 
                             item.getItemName(), item.getBatchNumber(), item.getExpireDate()));
                 } else {
@@ -71,7 +73,7 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
                             item.getItemName(), item.getBatchNumber(), item.getExpireDate()));
                 }
                 alert.setStatus(0);
-                alert.setCreateTime(now);
+                alert.setCreateTime(LocalDateTime.now());
                 this.save(alert);
             }
         }

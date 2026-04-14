@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("feeding_record")
@@ -18,6 +21,8 @@ public class FeedingRecord {
     private Long operatorId;
     private String feedType;
     private BigDecimal totalAmount;
-    private Date executeTime;
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime executeTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
 }

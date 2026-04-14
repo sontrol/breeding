@@ -49,7 +49,7 @@ public class AuthController {
             return Result.success(data);
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.error("登录失败: " + e.getMessage());
+            return Result.error("登录失败: 用户名或密码错误");
         }
     }
 

@@ -1,5 +1,6 @@
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\entity\Inventory.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\FeedingRecordService.java
+C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\DashboardService.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\impl\SymptomServiceImpl.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\mapper\FeedingRecordMapper.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\entity\AuditLog.java
@@ -24,6 +25,7 @@ C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\bree
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\controller\AnimalController.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\SymptomService.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\controller\EventController.java
+C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\impl\DashboardServiceImpl.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\mapper\InventoryMapper.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\ai\AIService.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\InventoryService.java
@@ -33,6 +35,7 @@ C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\bree
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\TreatmentService.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\entity\Treatment.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\common\JwtAuthenticationFilter.java
+C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\test\PasswordGen.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\impl\DiagnosisServiceImpl.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\impl\AuditLogServiceImpl.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\UserService.java
@@ -51,6 +54,7 @@ C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\bree
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\common\JwtUtils.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\service\ai\AIDataAccessLayer.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\entity\Event.java
+C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\controller\DashboardController.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\entity\Diagnosis.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\mapper\SymptomMapper.java
 C:\Users\ZhiHao\Desktop\好东西\文件\breeding\backend\src\main\java\com\breeding\mapper\RoleMapper.java

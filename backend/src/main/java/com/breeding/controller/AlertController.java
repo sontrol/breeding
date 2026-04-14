@@ -10,7 +10,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @RestController
 @RequestMapping("/alert")
@@ -40,7 +43,7 @@ public class AlertController {
         
         LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         alert.setStatus(1); // 已处理
-        alert.setHandleTime(new Date());
+        alert.setHandleTime(LocalDateTime.now());
         alert.setHandlerId(loginUser.getUser().getId());
         
         return alertService.updateById(alert) ? Result.success() : Result.error("处理失败");

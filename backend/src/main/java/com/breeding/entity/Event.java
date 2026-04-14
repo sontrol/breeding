@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("event")
@@ -13,10 +16,12 @@ public class Event {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long animalId;
-    private String eventType; // feeding, disease, treatment, vaccine, death, sale, transfer
-    private Date eventTime;
+    private String eventType; 
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime eventTime;
     private Long operatorId;
     private String description;
     private Long relatedId;
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
 }

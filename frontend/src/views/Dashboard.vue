@@ -4,25 +4,25 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-title">当前总存栏量</div>
-          <div class="stat-value">1,245 <span class="unit">头</span></div>
+          <div class="stat-value">{{ stats.currentStock }} <span class="unit">头</span></div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-title">今日新生</div>
-          <div class="stat-value text-success">12 <span class="unit">头</span></div>
+          <div class="stat-value text-success">{{ stats.newBornToday }} <span class="unit">头</span></div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-title">患病隔离</div>
-          <div class="stat-value text-warning">5 <span class="unit">头</span></div>
+          <div class="stat-value text-warning">{{ stats.sickAndIsolated }} <span class="unit">头</span></div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-title">本月出栏</div>
-          <div class="stat-value text-primary">320 <span class="unit">头</span></div>
+          <div class="stat-value text-primary">{{ stats.outThisMonth }} <span class="unit">头</span></div>
         </el-card>
       </el-col>
     </el-row>
@@ -45,11 +45,36 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import * as echarts from 'echarts'
+import request from '@/api/request'
 
 const pieChartRef = ref()
 const lineChartRef = ref()
 
-onMounted(() => {
+const stats = ref({
+  currentStock: 0,
+  newBornToday: 0,
+  sickAndIsolated: 0,
+  outThisMonth: 0,
+  statusDistribution: [],
+  chartDates: [],
+  feedingAmounts: [],
+  diseaseCounts: [],
+  outCounts: []
+})
+
+const fetchStats = async () => {
+  try {
+    const res = await request.get('/dashboard/stats')
+    if (res.code === 200) {
+      stats.value = res.data
+      renderCharts()
+    }
+  } catch (error) {
+    console.error('Failed to fetch dashboard stats', error)
+  }
+}
+
+const renderCharts = () => {
   // 初始化饼图（动物状态分布）
   const pieChart = echarts.init(pieChartRef.value)
   pieChart.setOption({
@@ -61,11 +86,7 @@ onMounted(() => {
         name: '状态',
         type: 'pie',
         radius: '50%',
-        data: [
-          { value: 1048, name: '健康' },
-          { value: 20, name: '患病' },
-          { value: 15, name: '隔离' }
-        ],
+        data: stats.value.statusDistribution,
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -84,14 +105,18 @@ onMounted(() => {
     tooltip: { trigger: 'axis' },
     legend: { data: ['投喂量(kg)', '发病数', '出栏数'] },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', boundaryGap: false, data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+    xAxis: { type: 'category', boundaryGap: false, data: stats.value.chartDates },
     yAxis: { type: 'value' },
     series: [
-      { name: '投喂量(kg)', type: 'line', data: [1200, 1320, 1010, 1340, 900, 2300, 2100] },
-      { name: '发病数', type: 'line', data: [2, 1, 3, 0, 5, 1, 0] },
-      { name: '出栏数', type: 'line', data: [0, 0, 50, 0, 0, 100, 0] }
+      { name: '投喂量(kg)', type: 'line', data: stats.value.feedingAmounts },
+      { name: '发病数', type: 'line', data: stats.value.diseaseCounts },
+      { name: '出栏数', type: 'line', data: stats.value.outCounts }
     ]
   })
+}
+
+onMounted(() => {
+  fetchStats()
 })
 </script>
 

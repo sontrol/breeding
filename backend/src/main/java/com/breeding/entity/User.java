@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("user")
@@ -17,6 +20,8 @@ public class User {
     private String realName;
     private String phone;
     private Integer status;
-    private Date createTime;
-    private Date updateTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime updateTime;
 }

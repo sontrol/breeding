@@ -15,6 +15,7 @@ com\breeding\entity\Permission.class
 com\breeding\service\impl\AnimalServiceImpl.class
 com\breeding\service\impl\FeedingRecordServiceImpl.class
 com\breeding\common\LoginUser.class
+com\breeding\test\PasswordGen.class
 com\breeding\controller\ChatDTO.class
 com\breeding\service\TreatmentService.class
 com\breeding\service\ai\AIService.class
@@ -22,6 +23,7 @@ com\breeding\common\JwtUtils.class
 com\breeding\service\ai\AIDataAccessLayer.class
 com\breeding\mapper\AnimalMapper.class
 com\breeding\entity\Animal.class
+com\breeding\controller\DashboardController.class
 com\breeding\mapper\AlertMapper.class
 com\breeding\entity\Symptom.class
 com\breeding\service\DiagnosisService.class
@@ -57,7 +59,9 @@ com\breeding\controller\AnimalController.class
 com\breeding\service\impl\FeedingPlanServiceImpl.class
 com\breeding\service\impl\UserServiceImpl.class
 com\breeding\mapper\InventoryMapper.class
+com\breeding\service\DashboardService.class
 com\breeding\entity\Alert.class
+com\breeding\service\impl\DashboardServiceImpl.class
 com\breeding\service\impl\EventServiceImpl.class
 com\breeding\service\AlertService.class
 com\breeding\service\SymptomService.class

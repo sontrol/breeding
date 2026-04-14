@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("permission")
@@ -19,5 +22,6 @@ public class Permission {
     private String path;
     private String icon;
     private Integer sort;
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
 }

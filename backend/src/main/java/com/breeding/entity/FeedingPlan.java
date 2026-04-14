@@ -7,7 +7,10 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.sql.Time;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("feeding_plan")
@@ -18,6 +21,7 @@ public class FeedingPlan {
     private String feedType;
     private BigDecimal amountPerAnimal;
     private Time feedingTime;
-    private Integer status; // 1:启用, 0:停用
-    private Date createTime;
+    private Integer status; // 状态
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
 }

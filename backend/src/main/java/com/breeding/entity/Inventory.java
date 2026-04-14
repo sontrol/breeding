@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
 @TableName("inventory")
@@ -18,7 +21,10 @@ public class Inventory {
     private String batchNumber;
     private BigDecimal quantity;
     private String unit;
-    private Date produceDate;
-    private Date expireDate;
-    private Date createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd")
+    private LocalDate produceDate;
+    @JsonFormat(pattern = "yyyy/MM/dd")
+    private LocalDate expireDate;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime createTime;
 }

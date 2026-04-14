@@ -12,8 +12,8 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
-          <el-button type="success" @click="handleAdd" icon="Plus" v-if="hasPerm('disease:add')">上报症状</el-button>
+          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
+          <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('disease:add')">上报症状</el-button>
         </el-form-item>
       </el-form>
 
@@ -59,7 +59,7 @@
           <el-input v-model="form.animalId" placeholder="请输入出现症状的动物ID" />
         </el-form-item>
         <el-form-item label="发现时间" prop="observeTime">
-          <el-date-picker v-model="form.observeTime" type="datetime" placeholder="选择发现时间" value-format="YYYY-MM-DD HH:mm:ss" />
+          <el-date-picker v-model="form.observeTime" type="datetime" placeholder="选择发现时间" value-format="YYYY/MM/DD HH:mm:ss" />
         </el-form-item>
         <el-form-item label="症状描述" prop="symptomDesc">
           <el-input v-model="form.symptomDesc" type="textarea" :rows="3" placeholder="请详细描述症状，如: 食欲不振、体温升高" />
@@ -76,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
@@ -116,7 +117,7 @@ const hasPerm = (perm: string) => {
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
-  return dateStr.replace('T', ' ').split('.')[0]
+  return dayjs(dateStr).format('YYYY/MM/DD HH:mm:ss')
 }
 
 const getList = async () => {
@@ -152,7 +153,7 @@ const reset = () => {
   formRef.value?.resetFields()
 }
 
-const handleAdd = () => {
+const handle新增 = () => {
   reset()
   open.value = true
   title.value = '上报症状'

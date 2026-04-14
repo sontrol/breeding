@@ -14,8 +14,8 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
-          <el-button type="success" @click="handleAdd" icon="Plus" v-if="hasPerm('inventory:add')">入库</el-button>
+          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
+          <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('inventory:add')">入库</el-button>
         </el-form-item>
       </el-form>
 
@@ -75,7 +75,7 @@
           <el-input v-model="form.unit" placeholder="如: kg/盒/支" />
         </el-form-item>
         <el-form-item label="过期时间" prop="expireDate">
-          <el-date-picker v-model="form.expireDate" type="date" placeholder="选择过期日期" value-format="YYYY-MM-DD" />
+          <el-date-picker v-model="form.expireDate" type="date" placeholder="选择过期日期" value-format="YYYY/MM/DD" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -89,6 +89,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
@@ -141,7 +142,7 @@ const getTypeTag = (type: number) => {
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
-  return dateStr.split('T')[0]
+  return dayjs(dateStr).format('YYYY/MM/DD')
 }
 
 const isExpired = (dateStr: string) => {
@@ -182,7 +183,7 @@ const reset = () => {
   formRef.value?.resetFields()
 }
 
-const handleAdd = () => {
+const handle新增 = () => {
   reset()
   open.value = true
   title.value = '入库登记'

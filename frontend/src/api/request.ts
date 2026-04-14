@@ -25,12 +25,12 @@ service.interceptors.response.use(
   response => {
     const res = response.data
     if (res.code !== 200) {
-      ElMessage.error(res.msg || 'Error')
+      ElMessage.error(res.msg || '错误')
       if (res.code === 401 || res.code === 403) {
         useUserStore().logout()
         router.push('/login')
       }
-      return Promise.reject(new Error(res.msg || 'Error'))
+      return Promise.reject(new 错误(res.msg || '错误'))
     } else {
       return res
     }

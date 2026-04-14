@@ -16,9 +16,9 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
+          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
           <el-button @click="resetQuery" icon="Refresh">重置</el-button>
-          <el-button type="success" @click="handleAdd" icon="Plus" v-if="hasPerm('animal:add')">新增</el-button>
+          <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('animal:add')">新增</el-button>
         </el-form-item>
       </el-form>
 
@@ -40,8 +40,8 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
           <template #default="scope">
-            <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('animal:edit')">修改</el-button>
-            <el-button size="small" type="danger" link icon="Delete" @click="handleDelete(scope.row)" v-if="hasPerm('animal:delete')">删除</el-button>
+            <el-button size="small" type="primary" link icon="编辑" @click="handleUpdate(scope.row)" v-if="hasPerm('animal:edit')">修改</el-button>
+            <el-button size="small" type="danger" link icon="删除" @click="handle删除(scope.row)" v-if="hasPerm('animal:delete')">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -186,7 +186,7 @@ const reset = () => {
   formRef.value?.resetFields()
 }
 
-const handleAdd = () => {
+const handle新增 = () => {
   reset()
   open.value = true
   title.value = '添加动物'
@@ -215,7 +215,7 @@ const submitForm = () => {
   })
 }
 
-const handleDelete = (row: any) => {
+const handle删除 = (row: any) => {
   ElMessageBox.confirm(`是否确认删除耳标号为"${row.earTag}"的数据项？`, '警告', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',

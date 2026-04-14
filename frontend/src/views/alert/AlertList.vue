@@ -16,7 +16,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
+          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
           <el-button type="warning" @click="handleManualCheck" icon="RefreshRight" v-if="hasPerm('ROLE_ADMIN')" :loading="checking">手动触发检测</el-button>
         </el-form-item>
       </el-form>
@@ -77,6 +77,7 @@
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
@@ -119,7 +120,7 @@ const getRuleTypeTag = (type: string) => {
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return ''
-  return dateStr.replace('T', ' ').split('.')[0]
+  return dayjs(dateStr).format('YYYY/MM/DD HH:mm:ss')
 }
 
 const tableRowClassName = ({ row }: { row: any }) => {

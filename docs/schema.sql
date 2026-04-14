@@ -233,7 +233,7 @@ CREATE TABLE operation_log (
 -- ==========================================================
 -- 9. AI审计与权限日志
 -- ==========================================================
-CREATE TABLE ai_audit_log (
+CREATE TABLE audit_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL COMMENT '发起查询的用户ID',
     query_content TEXT NOT NULL COMMENT '用户的原始查询内容',
