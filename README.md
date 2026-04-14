@@ -1,4 +1,4 @@
-# 智能养殖管理系统 (Breeding Management System)
+# 养殖管理系统 (Breeding Management System)
 
 本项目是一个基于 Spring Boot + Vue 3 的前后端分离架构的养殖管理系统，融合了“事件驱动模型”与“DeepSeek大模型分析能力”。
 
