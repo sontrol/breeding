@@ -35,7 +35,16 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="150">
           <template #default="scope">
-            <el-button size="small" type="primary" link icon="View" v-if="scope.row.status === 0 && hasPerm('diagnosis:add')">去诊断</el-button>
+            <el-button
+              size="small"
+              type="primary"
+              link
+              icon="View"
+              @click="handleDiagnosis(scope.row)"
+              v-if="scope.row.status === 0 && hasPerm('diagnosis:add')"
+            >
+              去诊断
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -79,10 +88,12 @@
 import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
+const router = useRouter()
 const loading = ref(true)
 const symptomList = ref([])
 const total = ref(0)
@@ -171,6 +182,16 @@ const submitForm = () => {
       ElMessage.success('上报成功')
       open.value = false
       getList()
+    }
+  })
+}
+
+const handleDiagnosis = (row: any) => {
+  router.push({
+    path: '/disease/diagnosis',
+    query: {
+      symptomId: String(row.id),
+      animalId: String(row.animalId)
     }
   })
 }

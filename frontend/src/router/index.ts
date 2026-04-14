@@ -77,6 +77,18 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: 'SymptomList',
         component: () => import('../views/disease/SymptomList.vue'),
         meta: { title: '症状上报', icon: 'Warning' }
+      },
+      {
+        path: 'diagnosis',
+        name: 'DiagnosisList',
+        component: () => import('../views/disease/DiagnosisList.vue'),
+        meta: { title: '诊断记录', icon: 'FirstAidKit' }
+      },
+      {
+        path: 'treatment',
+        name: 'TreatmentList',
+        component: () => import('../views/disease/TreatmentList.vue'),
+        meta: { title: '治疗记录', icon: 'MagicStick' }
       }
     ]
   },
@@ -84,7 +96,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/ai',
     name: 'AI',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: 'AI 助手', permission: 'ai:view' },
+    meta: { title: 'AI 助手' },
     children: [
       {
         path: 'chat',
@@ -134,7 +146,7 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = localStorage.getItem('token')
   const hasValidAuthState = () => {
-    return !!userStore.token && (userStore.permissions.length > 0 || userStore.roles.length > 0)
+    return !!token
   }
   const resetInvalidAuth = (redirect = true) => {
     userStore.logout()

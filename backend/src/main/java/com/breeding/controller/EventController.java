@@ -16,7 +16,7 @@ public class EventController {
     private EventService eventService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAuthority('animal:view')")
+    @PreAuthorize("hasAuthority('event:view')")
     public Result<Page<Event>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -27,13 +27,13 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('animal:view')")
+    @PreAuthorize("hasAuthority('event:view')")
     public Result<Event> getById(@PathVariable Long id) {
         return Result.success(eventService.getById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('animal:add')")
+    @PreAuthorize("hasAuthority('event:add')")
     public Result<Boolean> add(@RequestBody Event event) {
         return eventService.save(event) ? Result.success() : Result.error("记录事件失败");
     }

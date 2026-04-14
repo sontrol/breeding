@@ -54,7 +54,7 @@ public class AIDataAccessLayer {
         }
 
         // 3. 事件数据访问权限校验
-        if (hasPermission(permissions, "dashboard:view", "report:view", "system:*", "ROLE_admin", "ROLE_owner")) {
+        if (hasPermission(permissions, "event:view", "dashboard:view", "report:view", "system:*", "ROLE_admin", "ROLE_owner")) {
             contextData.put("event_total", eventService.count());
             accessedModules.add("event");
         }

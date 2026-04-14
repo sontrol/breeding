@@ -36,6 +36,14 @@
             <el-icon><WarningFilled /></el-icon>
             <span>症状上报</span>
           </el-menu-item>
+          <el-menu-item index="/disease/diagnosis">
+            <el-icon><List /></el-icon>
+            <span>诊断记录</span>
+          </el-menu-item>
+          <el-menu-item index="/disease/treatment">
+            <el-icon><Clock /></el-icon>
+            <span>治疗记录</span>
+          </el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/inventory" v-if="hasPerm('inventory:view')">
           <template #title>
@@ -47,7 +55,7 @@
             <span>库存列表</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/ai" v-if="hasPerm('ai:view')">
+        <el-sub-menu index="/ai" v-if="canAccessAI()">
           <template #title>
             <el-icon><Monitor /></el-icon>
             <span>AI 助手</span>
@@ -106,6 +114,10 @@ const activeMenu = computed(() => route.path)
 
 const hasPerm = (perm: string) => {
   return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
+}
+
+const canAccessAI = () => {
+  return !!userStore.token
 }
 
 const handleLogout = () => {
