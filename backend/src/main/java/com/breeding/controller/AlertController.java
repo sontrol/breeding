@@ -11,10 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 @RestController
 @RequestMapping("/alert")
 public class AlertController {
@@ -23,7 +19,7 @@ public class AlertController {
     private AlertService alertService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('alert:list', 'ROLE_ADMIN', 'ROLE_RANCHER')")
+    @PreAuthorize("hasAuthority('alert:view')")
     public Result<Page<Alert>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -34,7 +30,7 @@ public class AlertController {
     }
 
     @PutMapping("/handle/{id}")
-    @PreAuthorize("hasAnyAuthority('alert:handle', 'ROLE_ADMIN', 'ROLE_RANCHER')")
+    @PreAuthorize("hasAuthority('alert:handle')")
     public Result<Boolean> handleAlert(@PathVariable Long id) {
         Alert alert = alertService.getById(id);
         if (alert == null) {
@@ -50,7 +46,7 @@ public class AlertController {
     }
 
     @PostMapping("/trigger-check")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('alert:check') or hasAuthority('system:*')")
     public Result<Boolean> manualTriggerCheck() {
         alertService.checkInventoryExpire();
         return Result.success();

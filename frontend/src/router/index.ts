@@ -17,7 +17,7 @@ const staticRoutes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('../views/Dashboard.vue'),
-        meta: { title: '数据看板', icon: 'Odometer' }
+        meta: { title: '数据看板', icon: 'Odometer', permission: 'dashboard:view' }
       }
     ]
   }
@@ -28,7 +28,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/animal',
     name: 'Animal',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: '动物管理', roles: ['ROLE_ADMIN', 'ROLE_RANCHER', 'ROLE_VET'] },
+    meta: { title: '动物管理', permission: 'animal:view' },
     children: [
       {
         path: 'list',
@@ -42,7 +42,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/feeding',
     name: 'Feeding',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: '饲养管理', roles: ['ROLE_ADMIN', 'ROLE_BREEDER'] },
+    meta: { title: '饲养管理', permission: 'feeding:view' },
     children: [
       {
         path: 'plan',
@@ -56,7 +56,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/inventory',
     name: 'Inventory',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: '库存管理', roles: ['ROLE_ADMIN', 'ROLE_VET', 'ROLE_BREEDER'] },
+    meta: { title: '库存管理', permission: 'inventory:view' },
     children: [
       {
         path: 'list',
@@ -70,7 +70,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/disease',
     name: 'Disease',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: '疾病管理', roles: ['ROLE_ADMIN', 'ROLE_VET', 'ROLE_BREEDER'] },
+    meta: { title: '疾病管理', permission: 'disease:view' },
     children: [
       {
         path: 'symptom',
@@ -84,7 +84,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/ai',
     name: 'AI',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: 'AI 助手', roles: ['ROLE_ADMIN', 'ROLE_RANCHER', 'ROLE_VET', 'ROLE_BREEDER'] },
+    meta: { title: 'AI 助手', permission: 'ai:view' },
     children: [
       {
         path: 'chat',
@@ -98,7 +98,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/alert',
     name: 'Alert',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: '预警系统', roles: ['ROLE_ADMIN', 'ROLE_RANCHER'] },
+    meta: { title: '预警系统', permission: 'alert:view' },
     children: [
       {
         path: 'list',
@@ -112,7 +112,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/system',
     name: 'System',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: '系统管理', roles: ['ROLE_ADMIN'] },
+    meta: { title: '系统管理', permission: 'system:view' },
     children: [
       {
         path: 'user',
@@ -133,9 +133,41 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = localStorage.getItem('token')
+  const hasValidAuthState = () => {
+    return !!userStore.token && (userStore.permissions.length > 0 || userStore.roles.length > 0)
+  }
+  const resetInvalidAuth = (redirect = true) => {
+    userStore.logout()
+    return redirect ? next('/login') : next()
+  }
+  const hasPerm = (perm?: string) => {
+    if (!perm) {
+      return true
+    }
+    return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
+  }
+  const firstAllowedPath = () => {
+    if (hasPerm('dashboard:view')) {
+      return '/dashboard'
+    }
+    const firstRoute = dynamicRoutes.find(route => hasPerm(route.meta?.permission as string | undefined))
+    if (!firstRoute) {
+      return '/login'
+    }
+    const firstChild = firstRoute.children?.[0]
+    return firstChild ? `${firstRoute.path}/${firstChild.path}` : firstRoute.path
+  }
 
   if (to.path === '/login') {
-    if (token) return next('/')
+    if (token && !hasValidAuthState()) {
+      return resetInvalidAuth(false)
+    }
+    if (token) {
+      const targetPath = firstAllowedPath()
+      if (targetPath !== '/login') {
+        return next(targetPath)
+      }
+    }
     return next()
   }
 
@@ -143,14 +175,18 @@ router.beforeEach((to, from, next) => {
     return next('/login')
   }
 
+  if (!hasValidAuthState()) {
+    return resetInvalidAuth()
+  }
+
   // 简单的动态路由注入逻辑
   if (!userStore.hasAddedRoutes) {
-    const roles = userStore.roles || []
+    const permissions = userStore.permissions || []
     dynamicRoutes.forEach(route => {
-      // 简单判断角色权限
-      if (route.meta?.roles) {
-        const routeRoles = route.meta.roles as string[]
-        if (roles.some(r => routeRoles.includes(r))) {
+      // 基于 permission 码判断权限
+      if (route.meta?.permission) {
+        const reqPerm = route.meta.permission as string
+        if (permissions.includes(reqPerm) || permissions.includes('system:*') || userStore.roles.includes('admin')) {
           router.addRoute(route)
         }
       } else {
@@ -159,6 +195,14 @@ router.beforeEach((to, from, next) => {
     })
     userStore.setHasAddedRoutes(true)
     return next({ ...to, replace: true })
+  }
+
+  if (!hasPerm(to.meta?.permission as string | undefined)) {
+    const targetPath = firstAllowedPath()
+    if (targetPath === '/login') {
+      return resetInvalidAuth()
+    }
+    return next(targetPath)
   }
 
   next()

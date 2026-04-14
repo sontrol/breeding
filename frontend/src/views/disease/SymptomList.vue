@@ -12,7 +12,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
+          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
           <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('disease:add')">上报症状</el-button>
         </el-form-item>
       </el-form>
@@ -35,7 +35,7 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="150">
           <template #default="scope">
-            <el-button size="small" type="primary" link icon="View" v-if="scope.row.status === 0 && hasPerm('disease:diagnose')">去诊断</el-button>
+            <el-button size="small" type="primary" link icon="View" v-if="scope.row.status === 0 && hasPerm('diagnosis:add')">去诊断</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -112,7 +112,7 @@ const rules = {
 }
 
 const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.roles.includes('ROLE_ADMIN')
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const formatDate = (dateStr: string) => {

@@ -53,7 +53,7 @@ const handleLogin = () => {
           ElMessage.error(res.msg || '登录失败')
         }
       } catch (error) {
-        ElMessage.error('网络错误，请稍后再试')
+        // 错误提示已由全局请求拦截器统一处理，这里只负责终止登录流程
       } finally {
         loading.value = false
       }

@@ -27,8 +27,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         
         List<String> permissions = userMapper.selectUserPermissions(user.getId());
         List<String> roles = userMapper.selectUserRoles(user.getId());
-        
-        // 将角色也作为权限添加，通常加上 ROLE_ 前缀
+
+        // 角色同时注入到授权集合，便于后续保留角色兜底判断
         roles.forEach(role -> permissions.add("ROLE_" + role));
         
         return new LoginUser(user, permissions);

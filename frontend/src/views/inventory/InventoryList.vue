@@ -1,4 +1,4 @@
-<template>
+﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
@@ -14,7 +14,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
+          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
           <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('inventory:add')">入库</el-button>
         </el-form-item>
       </el-form>
@@ -127,7 +127,7 @@ const rules = {
 }
 
 const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.roles.includes('ROLE_ADMIN')
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const getTypeLabel = (type: number) => {

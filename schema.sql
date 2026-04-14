@@ -1,6 +1,30 @@
 CREATE DATABASE IF NOT EXISTS breeding DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE breeding;
 
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS audit_log;
+DROP TABLE IF EXISTS operation_log;
+DROP TABLE IF EXISTS alert;
+DROP TABLE IF EXISTS inventory_log;
+DROP TABLE IF EXISTS inventory;
+DROP TABLE IF EXISTS vaccine_record;
+DROP TABLE IF EXISTS vaccine;
+DROP TABLE IF EXISTS treatment;
+DROP TABLE IF EXISTS diagnosis;
+DROP TABLE IF EXISTS symptom;
+DROP TABLE IF EXISTS feeding_record;
+DROP TABLE IF EXISTS feeding_plan;
+DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS animal_status_log;
+DROP TABLE IF EXISTS animal;
+DROP TABLE IF EXISTS shed;
+DROP TABLE IF EXISTS role_permission;
+DROP TABLE IF EXISTS user_role;
+DROP TABLE IF EXISTS permission;
+DROP TABLE IF EXISTS role;
+DROP TABLE IF EXISTS user;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- ==========================================================
 -- 1. 用户与权限管理 (RBAC)
 -- ==========================================================
@@ -18,7 +42,7 @@ CREATE TABLE user (
 CREATE TABLE role (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     role_name VARCHAR(50) NOT NULL UNIQUE COMMENT '角色名称(如:管理员、兽医)',
-    role_code VARCHAR(50) NOT NULL UNIQUE COMMENT '角色编码(如:ADMIN, VET)',
+    role_code VARCHAR(50) NOT NULL UNIQUE COMMENT '角色编码(如:admin, owner, vet, feeder)',
     description VARCHAR(200),
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '系统角色表';
@@ -242,7 +266,140 @@ CREATE TABLE audit_log (
     query_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '查询时间'
 ) COMMENT 'AI助手查询审计日志表';
 
--- 插入默认管理员数据
-INSERT INTO user (username, password, real_name, status) VALUES ('admin', '$2a$10$hQ2j60v/890X5502.Hh49O7T1Jv/uA14lA0hPjZ66n5T7/9l/E67i', '超级管理员', 1);
-INSERT INTO role (role_name, role_code) VALUES ('超级管理员', 'ADMIN'), ('牧场主', 'RANCHER'), ('兽医', 'VET'), ('饲养员', 'BREEDER');
-INSERT INTO user_role (user_id, role_id) VALUES (1, 1);
+-- ==========================================================
+-- 10. RBAC 初始化数据
+-- 默认密码统一为 123456
+-- ==========================================================
+INSERT INTO role (id, role_name, role_code, description) VALUES
+(1, '管理员', 'admin', '系统管理员，拥有全部权限'),
+(2, '牧场主', 'owner', '负责养殖经营与看板分析'),
+(3, '兽医', 'vet', '负责疾病诊断与治疗'),
+(4, '饲养员', 'feeder', '负责日常饲养与预警查看');
+
+INSERT INTO permission (id, parent_id, name, code, type, path, sort) VALUES
+(10, 0, '数据看板', 'dashboard:view', 1, '/dashboard', 10),
+(11, 0, '统计报表', 'report:view', 1, '/report', 11),
+(100, 0, '动物管理', 'animal:view', 1, '/animal', 100),
+(101, 100, '新增动物', 'animal:add', 2, NULL, 101),
+(102, 100, '修改动物', 'animal:edit', 2, NULL, 102),
+(103, 100, '删除动物', 'animal:delete', 2, NULL, 103),
+(200, 0, '饲养管理', 'feeding:view', 1, '/feeding', 200),
+(201, 200, '饲养操作', 'feeding:add', 2, NULL, 201),
+(202, 200, '新增饲养计划', 'feeding:plan:add', 2, NULL, 202),
+(203, 200, '修改饲养计划', 'feeding:plan:edit', 2, NULL, 203),
+(204, 200, '录入饲养记录', 'feeding:record:add', 2, NULL, 204),
+(300, 0, '疾病管理', 'disease:view', 1, '/disease', 300),
+(301, 300, '记录疾病', 'disease:add', 2, NULL, 301),
+(302, 300, '疾病诊断', 'diagnosis:add', 2, NULL, 302),
+(303, 300, '疾病治疗', 'treatment:add', 2, NULL, 303),
+(304, 300, '疫苗录入', 'vaccine:add', 2, NULL, 304),
+(400, 0, '预警中心', 'alert:view', 1, '/alert', 400),
+(401, 400, '处理预警', 'alert:handle', 2, NULL, 401),
+(402, 400, '触发检测', 'alert:check', 2, NULL, 402),
+(500, 0, '库存管理', 'inventory:view', 1, '/inventory', 500),
+(501, 500, '新增库存', 'inventory:add', 2, NULL, 501),
+(502, 500, '修改库存', 'inventory:edit', 2, NULL, 502),
+(503, 500, '删除库存', 'inventory:delete', 2, NULL, 503),
+(600, 0, '批次管理', 'batch:add', 2, NULL, 600),
+(601, 0, '出栏管理', 'sale:add', 2, NULL, 601),
+(700, 0, 'AI助手', 'ai:view', 1, '/ai', 700),
+(800, 0, '系统管理', 'system:view', 1, '/system', 800),
+(801, 800, '新增用户', 'system:user:add', 2, NULL, 801),
+(802, 800, '修改用户', 'system:user:edit', 2, NULL, 802),
+(803, 800, '删除用户', 'system:user:delete', 2, NULL, 803),
+(804, 800, '系统全权限', 'system:*', 2, NULL, 804);
+
+INSERT INTO role_permission (role_id, permission_id) VALUES
+(1, 10), (1, 11), (1, 100), (1, 101), (1, 102), (1, 103),
+(1, 200), (1, 201), (1, 202), (1, 203), (1, 204),
+(1, 300), (1, 301), (1, 302), (1, 303), (1, 304),
+(1, 400), (1, 401), (1, 402),
+(1, 500), (1, 501), (1, 502), (1, 503),
+(1, 600), (1, 601), (1, 700),
+(1, 800), (1, 801), (1, 802), (1, 803), (1, 804),
+(2, 10), (2, 11), (2, 100), (2, 101), (2, 102),
+(2, 200), (2, 201), (2, 202),
+(2, 300), (2, 600), (2, 601),
+(3, 100), (3, 300), (3, 301), (3, 302), (3, 303), (3, 304),
+(4, 100), (4, 200), (4, 201), (4, 204), (4, 400);
+
+INSERT INTO user (id, username, password, real_name, phone, status) VALUES
+(1, 'admin', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '系统管理员', '13800000000', 1),
+(2, 'owner1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '牧场主一号', '13800000001', 1),
+(3, 'vet1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '兽医一号', '13800000002', 1),
+(4, 'feeder1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '饲养员一号', '13800000003', 1);
+
+INSERT INTO user_role (user_id, role_id) VALUES
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4);
+
+-- ==========================================================
+-- 11. 示例业务数据
+-- ==========================================================
+INSERT INTO shed (id, name, capacity, current_count, manager_id) VALUES
+(1, 'A01 栏舍', 120, 3, 4),
+(2, 'B01 栏舍', 80, 2, 4);
+
+INSERT INTO animal (id, ear_tag, species, variety, birth_date, gender, shed_id, status) VALUES
+(1, 'EAR2026001', '生猪', '长白猪', DATE_SUB(CURDATE(), INTERVAL 180 DAY), 1, 1, 1),
+(2, 'EAR2026002', '生猪', '约克夏猪', DATE_SUB(CURDATE(), INTERVAL 150 DAY), 2, 1, 2),
+(3, 'EAR2026003', '奶牛', '荷斯坦牛', DATE_SUB(CURDATE(), INTERVAL 400 DAY), 2, 2, 1),
+(4, 'EAR2026004', '肉牛', '西门塔尔牛', DATE_SUB(CURDATE(), INTERVAL 320 DAY), 1, 2, 3),
+(5, 'EAR2026005', '山羊', '波尔山羊', CURDATE(), 2, 1, 1);
+
+INSERT INTO animal_status_log (id, animal_id, old_status, new_status, operator_id, remark) VALUES
+(1, 4, 1, 3, 3, '出现发热和采食下降，转入隔离观察');
+
+INSERT INTO inventory (id, item_name, item_type, batch_number, quantity, unit, produce_date, expire_date) VALUES
+(1, '育肥猪配合饲料', 1, 'FD20260401', 3500.00, 'kg', DATE_SUB(CURDATE(), INTERVAL 20 DAY), DATE_ADD(CURDATE(), INTERVAL 180 DAY)),
+(2, '氟苯尼考注射液', 2, 'MD20260315', 120.00, '盒', DATE_SUB(CURDATE(), INTERVAL 30 DAY), DATE_ADD(CURDATE(), INTERVAL 365 DAY)),
+(3, '口蹄疫灭活疫苗', 3, 'VC20260320', 260.00, '支', DATE_SUB(CURDATE(), INTERVAL 25 DAY), DATE_ADD(CURDATE(), INTERVAL 300 DAY)),
+(4, '一次性注射器', 4, 'EQ20260405', 500.00, '支', DATE_SUB(CURDATE(), INTERVAL 10 DAY), DATE_ADD(CURDATE(), INTERVAL 720 DAY));
+
+INSERT INTO inventory_log (id, inventory_id, operation_type, quantity, operator_id, operate_time, remark) VALUES
+(1, 1, 1, 4000.00, 1, DATE_SUB(NOW(), INTERVAL 10 DAY), '月度饲料采购入库'),
+(2, 1, 2, 500.00, 4, DATE_SUB(NOW(), INTERVAL 1 DAY), '日常投喂消耗'),
+(3, 2, 1, 120.00, 1, DATE_SUB(NOW(), INTERVAL 15 DAY), '兽药采购入库'),
+(4, 3, 1, 260.00, 3, DATE_SUB(NOW(), INTERVAL 12 DAY), '疫苗采购入库');
+
+INSERT INTO feeding_plan (id, shed_id, feed_type, amount_per_animal, feeding_time, status) VALUES
+(1, 1, '育肥猪配合饲料', 2.50, '08:00:00', 1),
+(2, 2, '反刍动物精料', 3.20, '09:00:00', 1);
+
+INSERT INTO feeding_record (id, plan_id, shed_id, operator_id, feed_type, total_amount, execute_time) VALUES
+(1, 1, 1, 4, '育肥猪配合饲料', 180.00, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(2, 1, 1, 4, '育肥猪配合饲料', 175.00, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(3, 1, 1, 4, '育肥猪配合饲料', 178.00, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(4, 2, 2, 4, '反刍动物精料', 96.00, DATE_SUB(NOW(), INTERVAL 1 DAY));
+
+INSERT INTO symptom (id, animal_id, observer_id, symptom_desc, observe_time, status) VALUES
+(1, 4, 4, '体温升高、精神沉郁、采食量下降', DATE_SUB(NOW(), INTERVAL 2 DAY), 1),
+(2, 2, 4, '轻微咳嗽，待进一步观察', DATE_SUB(NOW(), INTERVAL 5 HOUR), 0);
+
+INSERT INTO diagnosis (id, symptom_id, animal_id, vet_id, disease_name, severity, diagnose_time, status) VALUES
+(1, 1, 4, 3, '牛呼吸道感染', 2, DATE_SUB(NOW(), INTERVAL 1 DAY), 0);
+
+INSERT INTO treatment (id, diagnosis_id, animal_id, vet_id, medicine_id, dosage, treatment_time, result) VALUES
+(1, 1, 4, 3, 2, 2.00, DATE_SUB(NOW(), INTERVAL 20 HOUR), '首次用药后体温有所下降，继续观察');
+
+INSERT INTO vaccine (id, name, target_disease, manufacturer) VALUES
+(1, '口蹄疫灭活疫苗', '口蹄疫', '中牧股份'),
+(2, '猪瘟活疫苗', '猪瘟', '哈药集团');
+
+INSERT INTO vaccine_record (id, animal_id, vaccine_id, vet_id, batch_number, inject_time, next_due_date) VALUES
+(1, 1, 2, 3, 'VC20260320', DATE_SUB(NOW(), INTERVAL 30 DAY), DATE_ADD(CURDATE(), INTERVAL 150 DAY)),
+(2, 3, 1, 3, 'VC20260320', DATE_SUB(NOW(), INTERVAL 20 DAY), DATE_ADD(CURDATE(), INTERVAL 160 DAY));
+
+INSERT INTO event (id, animal_id, event_type, event_time, operator_id, description, related_id) VALUES
+(1, 1, 'feeding', DATE_SUB(NOW(), INTERVAL 3 DAY), 4, '执行早间投喂计划', 1),
+(2, 4, 'disease', DATE_SUB(NOW(), INTERVAL 2 DAY), 4, '发现异常症状并上报', 1),
+(3, 4, 'treatment', DATE_SUB(NOW(), INTERVAL 20 HOUR), 3, '完成首次治疗', 1),
+(4, 3, 'vaccine', DATE_SUB(NOW(), INTERVAL 20 DAY), 3, '完成口蹄疫疫苗接种', 2),
+(5, 5, 'feeding', DATE_SUB(NOW(), INTERVAL 1 HOUR), 4, '新生羔羊补充营养', NULL);
+
+INSERT INTO alert (id, rule_type, target_id, alert_msg, status, create_time, handle_time, handler_id) VALUES
+(1, 'medicine_expire', 2, '氟苯尼考注射液库存请在到期前完成使用计划核查', 0, DATE_SUB(NOW(), INTERVAL 6 HOUR), NULL, NULL),
+(2, 'temperature_anomaly', 4, '耳标 EAR2026004 体温异常，请兽医复检', 1, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 12 HOUR), 3),
+(3, 'no_food_long', 2, '耳标 EAR2026002 近 6 小时采食异常偏低', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), NULL, NULL);

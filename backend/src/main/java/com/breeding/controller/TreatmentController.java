@@ -16,7 +16,7 @@ public class TreatmentController {
     private TreatmentService treatmentService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('disease:list', 'ROLE_ADMIN', 'ROLE_VET')")
+    @PreAuthorize("hasAuthority('disease:view')")
     public Result<Page<Treatment>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -27,7 +27,7 @@ public class TreatmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('disease:treat', 'ROLE_ADMIN', 'ROLE_VET')")
+    @PreAuthorize("hasAuthority('treatment:add')")
     public Result<Boolean> add(@RequestBody Treatment treatment) {
         return treatmentService.save(treatment) ? Result.success() : Result.error("治疗记录保存失败");
     }

@@ -9,8 +9,8 @@
           <el-input v-model="queryParams.realName" placeholder="请输入真实姓名" clearable />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery" icon="查询">查询</el-button>
-          <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('sys:user:add')">新增用户</el-button>
+          <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
+          <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('system:user:add')">新增用户</el-button>
         </el-form-item>
       </el-form>
 
@@ -31,8 +31,8 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="150">
           <template #default="scope">
-            <el-button size="small" type="primary" link icon="编辑" @click="handleUpdate(scope.row)" v-if="hasPerm('sys:user:edit')">修改</el-button>
-            <el-button size="small" type="danger" link icon="删除" @click="handle删除(scope.row)" v-if="hasPerm('sys:user:delete') && scope.row.id !== 1">删除</el-button>
+            <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('system:user:edit')">修改</el-button>
+            <el-button size="small" type="danger" link icon="Delete" @click="handle删除(scope.row)" v-if="hasPerm('system:user:delete') && scope.row.id !== 1">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -122,7 +122,7 @@ const rules = {
 }
 
 const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.roles.includes('ROLE_ADMIN')
+  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const formatDate = (dateStr: string) => {

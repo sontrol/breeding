@@ -16,7 +16,7 @@ public class SymptomController {
     private SymptomService symptomService;
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyAuthority('disease:list', 'ROLE_ADMIN', 'ROLE_VET', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('disease:view')")
     public Result<Page<Symptom>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -27,7 +27,7 @@ public class SymptomController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('disease:add', 'ROLE_ADMIN', 'ROLE_BREEDER')")
+    @PreAuthorize("hasAuthority('disease:add')")
     public Result<Boolean> add(@RequestBody Symptom symptom) {
         return symptomService.save(symptom) ? Result.success() : Result.error("上报症状失败");
     }

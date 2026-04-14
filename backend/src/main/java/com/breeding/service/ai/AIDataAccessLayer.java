@@ -41,26 +41,26 @@ public class AIDataAccessLayer {
         List<String> accessedModules = new ArrayList<>();
 
         // 1. 动物数据访问权限校验
-        if (hasPermission(permissions, "animal:list", "ROLE_ADMIN", "ROLE_RANCHER", "ROLE_VET")) {
+        if (hasPermission(permissions, "animal:view", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_vet")) {
             // 获取简要的动物统计数据供AI分析
             contextData.put("animal_total", animalService.count());
             accessedModules.add("animal");
         }
 
         // 2. 库存数据访问权限校验
-        if (hasPermission(permissions, "inventory:list", "ROLE_ADMIN", "ROLE_VET", "ROLE_BREEDER")) {
+        if (hasPermission(permissions, "inventory:view", "system:*", "ROLE_admin")) {
             contextData.put("inventory_total", inventoryService.count());
             accessedModules.add("inventory");
         }
 
         // 3. 事件数据访问权限校验
-        if (hasPermission(permissions, "event:list", "ROLE_ADMIN", "ROLE_RANCHER")) {
+        if (hasPermission(permissions, "dashboard:view", "report:view", "system:*", "ROLE_admin", "ROLE_owner")) {
             contextData.put("event_total", eventService.count());
             accessedModules.add("event");
         }
 
         // 4. 疾病数据访问权限校验
-        if (hasPermission(permissions, "disease:list", "ROLE_ADMIN", "ROLE_VET", "ROLE_BREEDER")) {
+        if (hasPermission(permissions, "disease:view", "disease:add", "diagnosis:add", "treatment:add", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_vet")) {
             contextData.put("symptom_total", symptomService.count());
             accessedModules.add("disease");
         }
