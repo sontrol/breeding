@@ -27,25 +27,30 @@ public class AuthController {
 
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody LoginDTO loginDTO) {
-        // 1. 用户认证
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword())
-        );
+        try {
+            // 1. 用户认证
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword())
+            );
 
-        // 2. 如果认证通过，生成JWT
-        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
-        String token = jwtUtils.generateToken(loginUser);
+            // 2. 如果认证通过，生成JWT
+            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+            String token = jwtUtils.generateToken(loginUser);
 
-        // 3. 返回Token及用户信息
-        Map<String, Object> data = new HashMap<>();
-        data.put("token", token);
-        data.put("userId", loginUser.getUser().getId());
-        data.put("username", loginUser.getUsername());
-        data.put("realName", loginUser.getUser().getRealName());
-        data.put("roles", loginUser.getPermissions().stream().filter(p -> p.startsWith("ROLE_")).toList());
-        data.put("permissions", loginUser.getPermissions().stream().filter(p -> !p.startsWith("ROLE_")).toList());
+            // 3. 返回Token及用户信息
+            Map<String, Object> data = new HashMap<>();
+            data.put("token", token);
+            data.put("userId", loginUser.getUser().getId());
+            data.put("username", loginUser.getUsername());
+            data.put("realName", loginUser.getUser().getRealName());
+            data.put("roles", loginUser.getPermissions().stream().filter(p -> p.startsWith("ROLE_")).toList());
+            data.put("permissions", loginUser.getPermissions().stream().filter(p -> !p.startsWith("ROLE_")).toList());
 
-        return Result.success(data);
+            return Result.success(data);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.error("登录失败: " + e.getMessage());
+        }
     }
 
     @PostMapping("/logout")

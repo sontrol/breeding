@@ -243,6 +243,6 @@ CREATE TABLE ai_audit_log (
 ) COMMENT 'AI助手查询审计日志表';
 
 -- 插入默认管理员数据
-INSERT INTO user (username, password, real_name, status) VALUES ('admin', '$2a$10$7Q9b9Z9b9Z9b9Z9b9Z9b9e9b9Z9b9Z9b9Z9b9Z9b9Z9b9Z9b9Z9b9', '超级管理员', 1);
+INSERT INTO user (username, password, real_name, status) VALUES ('admin', '$2a$10$hQ2j60v/890X5502.Hh49O7T1Jv/uA14lA0hPjZ66n5T7/9l/E67i', '超级管理员', 1);
 INSERT INTO role (role_name, role_code) VALUES ('超级管理员', 'ADMIN'), ('牧场主', 'RANCHER'), ('兽医', 'VET'), ('饲养员', 'BREEDER');
 INSERT INTO user_role (user_id, role_id) VALUES (1, 1);
