@@ -19,6 +19,7 @@ public class FeedingPlan {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long shedId;
+    private Long inventoryId; // 关联库存ID
     private String feedType;
     private BigDecimal amountPerAnimal;
     private Time feedingTime;

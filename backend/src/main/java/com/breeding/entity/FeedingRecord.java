@@ -19,6 +19,7 @@ public class FeedingRecord {
     private Long id;
     private Long planId;
     private Long shedId;
+    private Long inventoryId; // 关联库存ID
     private Long operatorId;
     private String feedType;
     private BigDecimal totalAmount;

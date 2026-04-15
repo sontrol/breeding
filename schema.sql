@@ -201,8 +201,8 @@ CREATE TABLE treatment (
     diagnosis_id BIGINT NOT NULL COMMENT '关联诊断ID',
     animal_id BIGINT NOT NULL,
     vet_id BIGINT NOT NULL COMMENT '执行兽医ID',
-    medicine_id BIGINT NOT NULL COMMENT '使用药品ID',
-    dosage DECIMAL(10,2) NOT NULL COMMENT '用药剂量',
+    medicine_id BIGINT NULL COMMENT '使用药品ID(多物品时可为空)',
+    dosage DECIMAL(10,2) NULL COMMENT '用药剂量(多物品时可为空)',
     treatment_time DATETIME NOT NULL COMMENT '治疗时间',
     result VARCHAR(200) COMMENT '治疗效果观察',
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
@@ -387,7 +387,7 @@ INSERT INTO role_permission (role_id, permission_id) VALUES
  (1, 800), (1, 801), (1, 802), (1, 803), (1, 804), (1, 805), (1, 806), (1, 807), (1, 808), (1, 809),
 (2, 10), (2, 11), (2, 100), (2, 101), (2, 102), (2, 104),
 (2, 200), (2, 201), (2, 202), (2, 205), (2, 206), (2, 207), (2, 700), (2, 805), (2, 806), (2, 807),
-(2, 300), (2, 350), (2, 400), (2, 401), (2, 402), (2, 403), (2, 600), (2, 601),
+(2, 300), (2, 350), (2, 400), (2, 401), (2, 402), (2, 403), (2, 500), (2, 502), (2, 600), (2, 601),
 (3, 100), (3, 300), (3, 301), (3, 302), (3, 303), (3, 304), (3, 400), (3, 403), (3, 700),
 (4, 100), (4, 200), (4, 201), (4, 204), (4, 400), (4, 403), (4, 700);
 

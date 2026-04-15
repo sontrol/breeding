@@ -3,12 +3,22 @@ package com.breeding.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
+import com.breeding.dto.treatment.TreatmentAddDTO;
+import com.breeding.entity.Animal;
+import com.breeding.entity.Diagnosis;
 import com.breeding.entity.Treatment;
+import com.breeding.entity.TreatmentItem;
+import com.breeding.mapper.TreatmentItemMapper;
+import com.breeding.service.AnimalService;
+import com.breeding.service.DiagnosisService;
+import com.breeding.service.InventoryService;
 import com.breeding.service.InvalidDataService;
 import com.breeding.service.TreatmentService;
+import com.breeding.vo.TreatmentVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,23 +29,102 @@ public class TreatmentController {
     private TreatmentService treatmentService;
 
     @Autowired
+    private InventoryService inventoryService;
+
+    @Autowired
+    private TreatmentItemMapper treatmentItemMapper;
+
+    @Autowired
     private InvalidDataService invalidDataService;
+
+    @Autowired
+    private DiagnosisService diagnosisService;
+
+    @Autowired
+    private AnimalService animalService;
 
     @GetMapping("/page")
     @PreAuthorize("hasAuthority('disease:view')")
-    public Result<Page<Treatment>> getPage(
+    public Result<Page<TreatmentVO>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long animalId,
             @RequestParam(required = false) Long diagnosisId) {
-        Page<Treatment> resultPage = treatmentService.getTreatmentPage(page, size, animalId, diagnosisId);
+        Page<TreatmentVO> resultPage = treatmentService.getTreatmentPage(page, size, animalId, diagnosisId);
         return Result.success(resultPage);
     }
 
     @PostMapping
     @PreAuthorize("hasAuthority('treatment:add')")
-    public Result<Boolean> add(@RequestBody Treatment treatment) {
-        return treatmentService.save(treatment) ? Result.success() : Result.error("治疗记录保存失败");
+    @Transactional(rollbackFor = Exception.class)
+    public Result<Boolean> add(@RequestBody TreatmentAddDTO dto) {
+        Treatment treatment = new Treatment();
+        treatment.setDiagnosisId(dto.getDiagnosisId());
+        treatment.setAnimalId(dto.getAnimalId());
+        treatment.setVetId(dto.getVetId());
+        treatment.setMedicineId(dto.getMedicineId());
+        treatment.setDosage(dto.getDosage());
+        treatment.setTreatmentTime(dto.getTreatmentTime());
+        treatment.setResult(dto.getResult());
+
+        try {
+            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            
+            if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+                for (TreatmentItem item : dto.getItems()) {
+                    inventoryService.deductInventory(
+                        item.getInventoryId(),
+                        item.getDosage(),
+                        loginUser.getUser().getId(),
+                        "治疗消耗 - " + item.getItemName() + " - 动物ID:" + dto.getAnimalId()
+                    );
+                }
+            } else if (dto.getMedicineId() != null) {
+                inventoryService.deductInventory(
+                    dto.getMedicineId(),
+                    dto.getDosage(),
+                    loginUser.getUser().getId(),
+                    "治疗用药消耗 - 动物ID:" + dto.getAnimalId()
+                );
+            }
+        } catch (Exception e) {
+            return Result.error("库存扣减失败: " + e.getMessage());
+        }
+        
+        boolean saved = treatmentService.save(treatment);
+        
+        if (saved && dto.getItems() != null && !dto.getItems().isEmpty()) {
+            for (TreatmentItem item : dto.getItems()) {
+                item.setTreatmentId(treatment.getId());
+                treatmentItemMapper.insert(item);
+            }
+        }
+
+        if (saved && dto.getDiagnosisId() != null) {
+            Diagnosis diagnosis = diagnosisService.getById(dto.getDiagnosisId());
+            if (diagnosis != null) {
+                if (dto.getDiagnosisStatus() != null) {
+                    diagnosis.setStatus(dto.getDiagnosisStatus());
+                    diagnosisService.updateById(diagnosis);
+                }
+
+                if (dto.getAnimalId() != null) {
+                    Animal animal = animalService.getById(dto.getAnimalId());
+                    if (animal != null) {
+                        if (dto.getDiagnosisStatus() != null) {
+                            if (dto.getDiagnosisStatus() == 1) {
+                                animal.setStatus(1);
+                            } else if (dto.getDiagnosisStatus() == 2) {
+                                animal.setStatus(4);
+                            }
+                            animalService.updateById(animal);
+                        }
+                    }
+                }
+            }
+        }
+        
+        return saved ? Result.success() : Result.error("治疗记录保存失败");
     }
 
     @PutMapping("/invalidate/{id}")

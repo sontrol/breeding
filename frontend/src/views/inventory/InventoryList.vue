@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
@@ -37,8 +37,9 @@
             <span :class="{'text-danger': isExpired(scope.row.expireDate)}">{{ formatDate(scope.row.expireDate) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="120">
+        <el-table-column label="操作" align="center" width="200">
           <template #default="scope">
+            <el-button size="small" type="primary" link icon="Edit" @click="handleEdit(scope.row)" v-if="hasPerm('inventory:edit')">编辑</el-button>
             <el-button size="small" type="danger" link icon="Delete" @click="handleInvalidate(scope.row)" v-if="hasPerm('inventory:invalidate')">作废</el-button>
           </template>
         </el-table-column>
@@ -63,7 +64,7 @@
           <el-input v-model="form.itemName" placeholder="请输入物品名称" />
         </el-form-item>
         <el-form-item label="分类" prop="itemType">
-          <el-select v-model="form.itemType" placeholder="请选择分类">
+          <el-select v-model="form.itemType" placeholder="请选择分类" :disabled="isEdit">
             <el-option label="饲料" :value="1" />
             <el-option label="药品" :value="2" />
             <el-option label="疫苗" :value="3" />
@@ -73,7 +74,7 @@
         <el-form-item label="批次号" prop="batchNumber">
           <el-input v-model="form.batchNumber" placeholder="请输入批次号" />
         </el-form-item>
-        <el-form-item label="入库数量" prop="quantity">
+        <el-form-item :label="isEdit ? '库存数量' : '入库数量'" prop="quantity">
           <el-input-number v-model="form.quantity" :min="0" :precision="2" />
         </el-form-item>
         <el-form-item label="单位" prop="unit">
@@ -107,6 +108,7 @@ const total = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
+const isEdit = ref(false);
 
 const queryParams = reactive({
   page: 1,
@@ -186,12 +188,29 @@ const handleCurrentChange = (val: number) => {
 const reset = () => {
   Object.assign(form, { id: undefined, itemName: '', itemType: 1, batchNumber: '', quantity: 0, unit: '', expireDate: '' })
   formRef.value?.resetFields()
+  isEdit.value = false
 }
 
 const handle新增 = () => {
   reset()
   open.value = true
   title.value = '入库登记'
+}
+
+const handleEdit = (row: any) => {
+  reset()
+  isEdit.value = true
+  Object.assign(form, { 
+    id: row.id, 
+    itemName: row.itemName, 
+    itemType: row.itemType, 
+    batchNumber: row.batchNumber, 
+    quantity: row.quantity, 
+    unit: row.unit, 
+    expireDate: row.expireDate 
+  })
+  open.value = true
+  title.value = '编辑库存'
 }
 
 const cancel = () => {
@@ -202,8 +221,13 @@ const cancel = () => {
 const submitForm = () => {
   formRef.value?.validate(async (valid: boolean) => {
     if (valid) {
-      await request.post('/inventory', form)
-      ElMessage.success('入库成功')
+      if (isEdit.value) {
+        await request.put('/inventory', form)
+        ElMessage.success('修改成功')
+      } else {
+        await request.post('/inventory', form)
+        ElMessage.success('入库成功')
+      }
       open.value = false
       getList()
     }

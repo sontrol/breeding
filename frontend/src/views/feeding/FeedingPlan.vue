@@ -23,7 +23,12 @@
       <el-table v-loading="planLoading" :data="planList" style="width: 100%" border>
         <el-table-column prop="id" label="计划ID" width="80" align="center" />
         <el-table-column prop="shedId" label="目标栏舍ID" align="center" />
-        <el-table-column prop="feedType" label="饲料类型" align="center" />
+        <el-table-column prop="feedType" label="饲料名称" align="center" />
+        <el-table-column label="库存批次" align="center">
+          <template #default="scope">
+            {{ scope.row.batchNumber || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="amountPerAnimal" label="单只投喂量(kg)" align="center" />
         <el-table-column prop="feedingTime" label="计划投喂时间" align="center" />
         <el-table-column prop="status" label="状态" align="center">
@@ -108,8 +113,15 @@
         <el-form-item label="目标栏舍ID" prop="shedId">
           <el-input v-model="form.shedId" placeholder="请输入目标栏舍ID" />
         </el-form-item>
-        <el-form-item label="饲料类型" prop="feedType">
-          <el-input v-model="form.feedType" placeholder="如: 猪饲料A款" />
+        <el-form-item label="选择饲料" prop="inventoryId">
+          <el-select v-model="form.inventoryId" placeholder="请选择饲料库存" filterable style="width: 100%" @change="handleInventoryChange">
+            <el-option
+              v-for="item in feedInventoryList"
+              :key="item.id"
+              :label="`${item.itemName} (批次: ${item.batchNumber}) - 库存: ${item.quantity}${item.unit}`"
+              :value="item.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="单只投喂量(kg)" prop="amountPerAnimal">
           <el-input-number v-model="form.amountPerAnimal" :min="0" :precision="2" :step="0.1" />
@@ -144,7 +156,9 @@ import { useUserStore } from '@/store/user'
 interface FeedingPlanRecord {
   id: number
   shedId: number | string
+  inventoryId?: number
   feedType: string
+  batchNumber?: string
   amountPerAnimal: number
   feedingTime: string
   status: number
@@ -154,6 +168,7 @@ interface FeedingExecuteRecord {
   id: number
   planId?: number
   shedId: number
+  inventoryId?: number
   operatorId: number
   feedType: string
   totalAmount: number
@@ -188,15 +203,18 @@ const recordQueryParams = reactive({
 const form = reactive({
   id: undefined,
   shedId: '',
+  inventoryId: undefined as number | undefined,
   feedType: '',
   amountPerAnimal: 0,
   feedingTime: '',
   status: 1
 })
 
+const feedInventoryList = ref<any[]>([])
+
 const rules = {
   shedId: [{ required: true, message: '栏舍ID不能为空', trigger: 'blur' }],
-  feedType: [{ required: true, message: '饲料类型不能为空', trigger: 'blur' }],
+  inventoryId: [{ required: true, message: '请选择饲料库存', trigger: 'change' }],
   feedingTime: [{ required: true, message: '计划时间不能为空', trigger: 'change' }]
 }
 
@@ -310,6 +328,7 @@ const handleExecute = (row: FeedingPlanRecord) => {
     const record = {
       planId: row.id,
       shedId: row.shedId,
+      inventoryId: row.inventoryId,
       feedType: row.feedType,
       operatorId: userStore.userInfo.userId,
       totalAmount: value,
@@ -322,7 +341,7 @@ const handleExecute = (row: FeedingPlanRecord) => {
 }
 
 const reset = () => {
-  Object.assign(form, { id: undefined, shedId: '', feedType: '', amountPerAnimal: 0, feedingTime: '', status: 1 })
+  Object.assign(form, { id: undefined, shedId: '', inventoryId: undefined, feedType: '', amountPerAnimal: 0, feedingTime: '', status: 1 })
   formRef.value?.resetFields()
 }
 
@@ -363,7 +382,26 @@ const submitForm = () => {
 onMounted(() => {
   getPlanList()
   getRecordList()
+  getFeedInventoryList()
 })
+
+const getFeedInventoryList = async () => {
+  try {
+    const res: any = await request.get('/inventory/page', { params: { page: 1, size: 100, itemType: 1 } })
+    if (res.code === 200) {
+      feedInventoryList.value = res.data.records || []
+    }
+  } catch (e) {
+    console.error('获取饲料库存失败', e)
+  }
+}
+
+const handleInventoryChange = (val: number) => {
+  const item = feedInventoryList.value.find(i => i.id === val)
+  if (item) {
+    form.feedType = item.itemName
+  }
+}
 </script>
 
 <style scoped>

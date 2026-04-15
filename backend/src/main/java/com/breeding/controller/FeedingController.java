@@ -7,7 +7,9 @@ import com.breeding.entity.FeedingPlan;
 import com.breeding.entity.FeedingRecord;
 import com.breeding.service.FeedingPlanService;
 import com.breeding.service.FeedingRecordService;
+import com.breeding.service.InventoryService;
 import com.breeding.service.InvalidDataService;
+import com.breeding.vo.FeedingPlanVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,12 +26,15 @@ public class FeedingController {
     private FeedingRecordService recordService;
 
     @Autowired
+    private InventoryService inventoryService;
+
+    @Autowired
     private InvalidDataService invalidDataService;
 
     // ----- 计划管理 -----
     @GetMapping("/plan/page")
     @PreAuthorize("hasAuthority('feeding:view')")
-    public Result<Page<FeedingPlan>> getPlanPage(
+    public Result<Page<FeedingPlanVO>> getPlanPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long shedId,
@@ -90,6 +95,26 @@ public class FeedingController {
     @PostMapping("/record")
     @PreAuthorize("hasAuthority('feeding:record:add')")
     public Result<Boolean> addRecord(@RequestBody FeedingRecord record) {
+        try {
+            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (record.getInventoryId() != null) {
+                inventoryService.deductInventory(
+                    record.getInventoryId(),
+                    record.getTotalAmount(),
+                    loginUser.getUser().getId(),
+                    "饲养投喂消耗 - 栏舍ID:" + record.getShedId()
+                );
+            } else if (record.getFeedType() != null) {
+                inventoryService.deductByItemName(
+                    record.getFeedType(),
+                    record.getTotalAmount(),
+                    loginUser.getUser().getId(),
+                    "饲养投喂消耗 - 栏舍ID:" + record.getShedId()
+                );
+            }
+        } catch (Exception e) {
+            return Result.error("库存扣减失败: " + e.getMessage());
+        }
         return recordService.save(record) ? Result.success() : Result.error("新增记录失败");
     }
 

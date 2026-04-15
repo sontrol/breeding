@@ -4,12 +4,21 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.breeding.entity.Inventory;
+import com.breeding.entity.InventoryLog;
+import com.breeding.mapper.InventoryLogMapper;
 import com.breeding.mapper.InventoryMapper;
 import com.breeding.service.InventoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory> implements InventoryService {
+
+    @Autowired
+    private InventoryLogMapper inventoryLogMapper;
 
     @Override
     public Page<Inventory> getInventoryPage(int pageNum, int pageSize, String itemName, Integer itemType) {
@@ -25,5 +34,46 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
         
         wrapper.orderByDesc(Inventory::getExpireDate);
         return this.page(page, wrapper);
+    }
+
+    @Override
+    public boolean deductInventory(Long inventoryId, BigDecimal quantity, Long operatorId, String remark) {
+        Inventory inventory = this.getById(inventoryId);
+        if (inventory == null) {
+            throw new RuntimeException("库存记录不存在");
+        }
+        if (inventory.getQuantity().compareTo(quantity) < 0) {
+            throw new RuntimeException("库存不足，当前库存: " + inventory.getQuantity() + inventory.getUnit());
+        }
+        
+        inventory.setQuantity(inventory.getQuantity().subtract(quantity));
+        this.updateById(inventory);
+        
+        InventoryLog log = new InventoryLog();
+        log.setInventoryId(inventoryId);
+        log.setOperationType(2); // 出库
+        log.setQuantity(quantity);
+        log.setOperatorId(operatorId);
+        log.setOperateTime(LocalDateTime.now());
+        log.setRemark(remark);
+        inventoryLogMapper.insert(log);
+        
+        return true;
+    }
+
+    @Override
+    public boolean deductByItemName(String itemName, BigDecimal quantity, Long operatorId, String remark) {
+        LambdaQueryWrapper<Inventory> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Inventory::getItemName, itemName)
+               .eq(Inventory::getDeleted, 0)
+               .orderByAsc(Inventory::getExpireDate)
+               .last("LIMIT 1");
+        Inventory inventory = this.getOne(wrapper);
+        
+        if (inventory == null) {
+            throw new RuntimeException("未找到 [" + itemName + "] 的库存记录");
+        }
+        
+        return deductInventory(inventory.getId(), quantity, operatorId, remark);
     }
 }

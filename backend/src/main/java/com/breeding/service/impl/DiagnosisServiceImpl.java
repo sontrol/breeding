@@ -3,13 +3,25 @@ package com.breeding.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.breeding.entity.Animal;
 import com.breeding.entity.Diagnosis;
+import com.breeding.entity.Symptom;
 import com.breeding.mapper.DiagnosisMapper;
+import com.breeding.service.AnimalService;
 import com.breeding.service.DiagnosisService;
+import com.breeding.service.SymptomService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis> implements DiagnosisService {
+
+    @Autowired
+    private SymptomService symptomService;
+
+    @Autowired
+    private AnimalService animalService;
 
     @Override
     public Page<Diagnosis> getDiagnosisPage(int pageNum, int pageSize, Long animalId, String diseaseName) {
@@ -25,5 +37,28 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
         
         wrapper.orderByDesc(Diagnosis::getDiagnoseTime);
         return this.page(page, wrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean save(Diagnosis diagnosis) {
+        boolean saved = super.save(diagnosis);
+        if (saved) {
+            if (diagnosis.getSymptomId() != null) {
+                Symptom symptom = symptomService.getById(diagnosis.getSymptomId());
+                if (symptom != null) {
+                    symptom.setStatus(1);
+                    symptomService.updateById(symptom);
+                }
+            }
+            if (diagnosis.getAnimalId() != null) {
+                Animal animal = animalService.getById(diagnosis.getAnimalId());
+                if (animal != null && animal.getStatus() != 4 && animal.getStatus() != 5) {
+                    animal.setStatus(2);
+                    animalService.updateById(animal);
+                }
+            }
+        }
+        return saved;
     }
 }

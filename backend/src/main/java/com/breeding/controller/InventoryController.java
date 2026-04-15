@@ -47,6 +47,11 @@ public class InventoryController {
     @PutMapping
     @PreAuthorize("hasAuthority('inventory:edit')")
     public Result<Boolean> update(@RequestBody Inventory inventory) {
+        Inventory existing = inventoryService.getById(inventory.getId());
+        if (existing == null) {
+            return Result.error("库存记录不存在");
+        }
+        inventory.setItemType(existing.getItemType());
         return inventoryService.updateById(inventory) ? Result.success() : Result.error("修改失败");
     }
 
