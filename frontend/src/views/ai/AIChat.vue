@@ -31,7 +31,7 @@
           type="textarea"
           :rows="3"
           placeholder="请向AI提问（如：目前有多少头动物？疫苗库存情况如何？）"
-          @keyup.enter.native.prevent="sendMessage"
+          @keydown.enter.prevent="handleEnter"
         />
         <el-button type="primary" class="send-btn" :loading="loading" @click="sendMessage" icon="Position">发送</el-button>
       </div>
@@ -41,13 +41,14 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
-import { ElMessage } from 'element-plus'
 import request from '@/api/request'
 
 interface Message {
   role: 'user' | 'ai'
   content: string
 }
+
+const AI_REQUEST_TIMEOUT = 60000
 
 const inputMessage = ref('')
 const loading = ref(false)
@@ -68,6 +69,13 @@ const formatContent = (content: string) => {
   return content.replace(/\n/g, '<br/>')
 }
 
+const handleEnter = (event: KeyboardEvent) => {
+  if (event.isComposing) {
+    return
+  }
+  sendMessage()
+}
+
 const sendMessage = async () => {
   if (!inputMessage.value.trim()) return
   
@@ -78,14 +86,18 @@ const sendMessage = async () => {
   scrollToBottom()
 
   try {
-    const res: any = await request.post('/ai/chat', { message: currentMsg })
+    const res: any = await request.post('/ai/chat', { message: currentMsg }, { timeout: AI_REQUEST_TIMEOUT })
     if (res.code === 200) {
       messageList.value.push({ role: 'ai', content: res.data })
     } else {
       messageList.value.push({ role: 'ai', content: `[系统提示] ${res.msg}` })
     }
   } catch (error: any) {
-    messageList.value.push({ role: 'ai', content: '[系统提示] 网络或接口请求异常，请检查后端服务。' })
+    const isTimeout = error?.code === 'ECONNABORTED' || String(error?.message || '').includes('timeout')
+    const systemMessage = isTimeout
+      ? '[系统提示] AI 请求处理时间较长，已超过 60 秒，请稍后重试或缩小提问范围。'
+      : '[系统提示] 网络或接口请求异常，请检查后端服务。'
+    messageList.value.push({ role: 'ai', content: systemMessage })
   } finally {
     loading.value = false
     scrollToBottom()
