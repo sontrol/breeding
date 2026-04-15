@@ -33,7 +33,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="150">
+        <el-table-column label="操作" align="center" width="220">
           <template #default="scope">
             <el-button
               size="small"
@@ -44,6 +44,16 @@
               v-if="scope.row.status === 0 && hasPerm('diagnosis:add')"
             >
               去诊断
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              link
+              icon="Delete"
+              @click="handleInvalidate(scope.row)"
+              v-if="hasPerm('symptom:invalidate')"
+            >
+              作废
             </el-button>
           </template>
         </el-table-column>
@@ -87,7 +97,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
@@ -194,6 +204,18 @@ const handleDiagnosis = (row: any) => {
       animalId: String(row.animalId)
     }
   })
+}
+
+const handleInvalidate = (row: any) => {
+  ElMessageBox.confirm(`是否确认作废症状记录 #${row.id}？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+    confirmButtonText: '确定作废',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    await request.put(`/symptom/invalidate/${row.id}`)
+    ElMessage.success('作废成功')
+    getList()
+  }).catch(() => {})
 }
 
 onMounted(() => {

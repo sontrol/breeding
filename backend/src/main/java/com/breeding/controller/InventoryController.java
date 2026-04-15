@@ -1,11 +1,14 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.entity.Inventory;
+import com.breeding.service.InvalidDataService;
 import com.breeding.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +17,9 @@ public class InventoryController {
 
     @Autowired
     private InventoryService inventoryService;
+
+    @Autowired
+    private InvalidDataService invalidDataService;
 
     @GetMapping("/page")
     @PreAuthorize("hasAuthority('inventory:view')")
@@ -45,8 +51,20 @@ public class InventoryController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('inventory:delete')")
+    @PreAuthorize("hasAuthority('inventory:invalidate')")
     public Result<Boolean> delete(@PathVariable Long id) {
-        return inventoryService.removeById(id) ? Result.success() : Result.error("删除失败");
+        return invalidate(id);
+    }
+
+    @PutMapping("/invalidate/{id}")
+    @PreAuthorize("hasAuthority('inventory:invalidate')")
+    public Result<Boolean> invalidate(@PathVariable Long id) {
+        try {
+            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            boolean success = invalidDataService.invalidate("inventory", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
+            return success ? Result.success() : Result.error("作废失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }

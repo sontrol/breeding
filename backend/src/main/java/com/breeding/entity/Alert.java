@@ -1,13 +1,13 @@
 package com.breeding.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
@@ -21,7 +21,12 @@ public class Alert {
     private Integer status; // 0:未处理, 1:已处理
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
+    private Long creatorId;
+    @TableField(exist = false)
+    private String creatorName;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime handleTime;
     private Long handlerId;
+    @TableLogic
+    private Integer deleted;
 }

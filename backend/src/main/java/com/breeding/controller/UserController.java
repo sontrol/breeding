@@ -1,11 +1,13 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.entity.User;
 import com.breeding.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +53,15 @@ public class UserController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('system:user:delete')")
     public Result<Boolean> delete(@PathVariable Long id) {
-        return userService.removeById(id) ? Result.success() : Result.error("删除用户失败");
+        try {
+            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (id.equals(loginUser.getUser().getId())) {
+                return Result.error("当前登录账号不允许删除");
+            }
+            boolean success = userService.deleteUserPermanently(id);
+            return success ? Result.success() : Result.error("删除用户失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }

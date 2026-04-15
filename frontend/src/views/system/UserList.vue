@@ -29,10 +29,10 @@
             {{ formatDate(scope.row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="150">
+        <el-table-column label="操作" align="center" width="180">
           <template #default="scope">
             <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('system:user:edit')">修改</el-button>
-            <el-button size="small" type="danger" link icon="Delete" @click="handle删除(scope.row)" v-if="hasPerm('system:user:delete') && scope.row.id !== 1">删除</el-button>
+            <el-button size="small" type="danger" link icon="Delete" @click="handleDelete(scope.row)" v-if="hasPerm('system:user:delete') && scope.row.id !== userStore.userInfo.userId">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -207,9 +207,9 @@ const submitForm = () => {
   })
 }
 
-const handle删除 = (row: any) => {
-  ElMessageBox.confirm(`是否确认删除用户"${row.username}"？`, '警告', {
-    confirmButtonText: '确定',
+const handleDelete = (row: any) => {
+  ElMessageBox.confirm(`是否确认删除用户"${row.username}"？删除后将无法恢复。`, '删除确认', {
+    confirmButtonText: '确定删除',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {

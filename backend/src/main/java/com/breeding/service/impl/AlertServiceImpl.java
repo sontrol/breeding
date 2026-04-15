@@ -5,17 +5,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.breeding.entity.Alert;
 import com.breeding.entity.Inventory;
+import com.breeding.entity.User;
 import com.breeding.mapper.AlertMapper;
+import com.breeding.mapper.UserMapper;
 import com.breeding.service.AlertService;
 import com.breeding.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import java.util.List;
 
 @Service
@@ -23,6 +24,9 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
 
     @Autowired
     private InventoryService inventoryService;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Override
     public Page<Alert> getAlertPage(int pageNum, int pageSize, String ruleType, Integer status) {
@@ -37,7 +41,9 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
         }
         
         wrapper.orderByDesc(Alert::getCreateTime);
-        return this.page(page, wrapper);
+        Page<Alert> alertPage = this.page(page, wrapper);
+        alertPage.getRecords().forEach(alert -> alert.setCreatorName(resolveCreatorName(alert.getCreatorId())));
+        return alertPage;
     }
 
     /**
@@ -77,5 +83,22 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
                 this.save(alert);
             }
         }
+    }
+
+    private String resolveCreatorName(Long creatorId) {
+        if (creatorId == null) {
+            return "系统";
+        }
+        User creator = userMapper.selectById(creatorId);
+        if (creator == null) {
+            return "系统";
+        }
+        if (creator.getRealName() != null && !creator.getRealName().isBlank()) {
+            return creator.getRealName();
+        }
+        if (creator.getUsername() != null && !creator.getUsername().isBlank()) {
+            return creator.getUsername();
+        }
+        return "系统";
     }
 }

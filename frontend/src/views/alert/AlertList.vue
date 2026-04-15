@@ -1,12 +1,14 @@
-﻿﻿﻿﻿﻿﻿﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
         <el-form-item label="预警类型">
           <el-select v-model="queryParams.ruleType" placeholder="请选择预警类型" clearable>
+            <el-option label="体温异常" value="temperature_anomaly" />
             <el-option label="物品过期预警" value="medicine_expire" />
             <el-option label="长时间未进食" value="no_food_long" />
             <el-option label="死亡率异常" value="death_rate_high" />
+            <el-option label="人工上报" value="manual_report" />
           </el-select>
         </el-form-item>
         <el-form-item label="处理状态">
@@ -17,6 +19,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
+          <el-button type="success" @click="openReportDialog" icon="Plus" v-if="hasPerm('alert:add')">提交预警</el-button>
           <el-button type="warning" @click="handleManualCheck" icon="RefreshRight" v-if="hasPerm('alert:check')" :loading="checking">手动触发检测</el-button>
         </el-form-item>
       </el-form>
@@ -34,6 +37,11 @@
             {{ formatDate(scope.row.createTime) }}
           </template>
         </el-table-column>
+        <el-table-column prop="creatorName" label="提交人" align="center" width="120">
+          <template #default="scope">
+            {{ scope.row.creatorName || '系统' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" align="center" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
@@ -46,7 +54,7 @@
             {{ scope.row.handleTime ? formatDate(scope.row.handleTime) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="120">
+        <el-table-column label="操作" align="center" width="200">
           <template #default="scope">
             <el-button 
               size="small" 
@@ -56,6 +64,16 @@
               @click="handleAlert(scope.row)" 
               v-if="scope.row.status === 0 && hasPerm('alert:handle')">
               标记已处理
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              link
+              icon="Delete"
+              @click="handleInvalidate(scope.row)"
+              v-if="hasPerm('alert:invalidate')"
+            >
+              作废
             </el-button>
           </template>
         </el-table-column>
@@ -73,12 +91,39 @@
         />
       </div>
     </el-card>
+
+    <el-dialog v-model="open" title="提交预警" width="560px" append-to-body>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="预警类型" prop="ruleType">
+          <el-select v-model="form.ruleType" placeholder="请选择预警类型" style="width: 100%">
+            <el-option label="体温异常" value="temperature_anomaly" />
+            <el-option label="未进食异常" value="no_food_long" />
+            <el-option label="死亡率异常" value="death_rate_high" />
+            <el-option label="物品过期风险" value="medicine_expire" />
+            <el-option label="人工上报" value="manual_report" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="关联ID" prop="targetId">
+          <el-input v-model="form.targetId" placeholder="可选，填写动物/库存等业务ID" />
+        </el-form-item>
+        <el-form-item label="预警内容" prop="alertMsg">
+          <el-input v-model="form.alertMsg" type="textarea" :rows="4" maxlength="200" show-word-limit placeholder="请输入真实预警内容" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span>
+          <el-button @click="open = false">取 消</el-button>
+          <el-button type="primary" @click="submitForm">提 交</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
+import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
@@ -86,6 +131,8 @@ import { useUserStore } from '@/store/user'
 const userStore = useUserStore()
 const loading = ref(true)
 const checking = ref(false)
+const open = ref(false)
+const formRef = ref<FormInstance>()
 const alertList = ref([])
 const total = ref(0)
 
@@ -96,24 +143,39 @@ const queryParams = reactive({
   status: undefined
 })
 
+const form = reactive({
+  ruleType: '',
+  targetId: '',
+  alertMsg: ''
+})
+
+const rules: FormRules = {
+  ruleType: [{ required: true, message: '请选择预警类型', trigger: 'change' }],
+  alertMsg: [{ required: true, message: '请输入预警内容', trigger: 'blur' }]
+}
+
 const hasPerm = (perm: string) => {
   return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
 const getRuleTypeLabel = (type: string) => {
   const map: Record<string, string> = { 
+    'temperature_anomaly': '体温异常',
     'medicine_expire': '物品过期', 
     'no_food_long': '未进食异常', 
-    'death_rate_high': '死亡率高' 
+    'death_rate_high': '死亡率高',
+    'manual_report': '人工上报'
   }
   return map[type] || type
 }
 
 const getRuleTypeTag = (type: string) => {
   const map: Record<string, string> = { 
+    'temperature_anomaly': 'danger',
     'medicine_expire': 'warning', 
     'no_food_long': 'danger', 
-    'death_rate_high': 'danger' 
+    'death_rate_high': 'danger',
+    'manual_report': 'info'
   }
   return map[type] || 'info'
 }
@@ -158,6 +220,32 @@ const handleCurrentChange = (val: number) => {
   getList()
 }
 
+const resetForm = () => {
+  form.ruleType = ''
+  form.targetId = ''
+  form.alertMsg = ''
+  formRef.value?.resetFields()
+}
+
+const openReportDialog = () => {
+  resetForm()
+  open.value = true
+}
+
+const submitForm = () => {
+  formRef.value?.validate(async (valid: boolean) => {
+    if (!valid) return
+    await request.post('/alert', {
+      ruleType: form.ruleType,
+      targetId: form.targetId ? Number(form.targetId) : null,
+      alertMsg: form.alertMsg
+    })
+    ElMessage.success('预警提交成功')
+    open.value = false
+    handleQuery()
+  })
+}
+
 const handleAlert = (row: any) => {
   ElMessageBox.confirm('确定将该预警标记为已处理吗？', '提示', {
     confirmButtonText: '确定',
@@ -181,6 +269,18 @@ const handleManualCheck = async () => {
   } finally {
     checking.value = false
   }
+}
+
+const handleInvalidate = (row: any) => {
+  ElMessageBox.confirm(`确定作废预警记录 #${row.id} 吗？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+    confirmButtonText: '确定作废',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    await request.put(`/alert/invalidate/${row.id}`)
+    ElMessage.success('作废成功')
+    getList()
+  }).catch(() => {})
 }
 
 onMounted(() => {

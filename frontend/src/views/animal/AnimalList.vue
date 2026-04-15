@@ -38,10 +38,11 @@
             <el-tag :type="getStatusType(scope.row.status)">{{ getStatusLabel(scope.row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="200" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" width="260" class-name="small-padding fixed-width">
           <template #default="scope">
+            <el-button size="small" type="primary" link icon="View" @click="handleDetail(scope.row)">详情</el-button>
             <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('animal:edit')">修改</el-button>
-            <el-button size="small" type="danger" link icon="Delete" @click="handle删除(scope.row)" v-if="hasPerm('animal:delete')">删除</el-button>
+            <el-button size="small" type="danger" link icon="Delete" @click="handleInvalidate(scope.row)" v-if="hasPerm('animal:invalidate')">作废</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -95,22 +96,144 @@
         </div>
       </template>
     </el-dialog>
+
+    <el-dialog title="动物详情" v-model="detailOpen" width="1100px" append-to-body>
+      <div v-loading="detailLoading">
+        <el-descriptions v-if="detailAnimal" :column="3" border>
+          <el-descriptions-item label="ID">{{ detailAnimal.id }}</el-descriptions-item>
+          <el-descriptions-item label="耳标号">{{ detailAnimal.earTag || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="getStatusType(detailAnimal.status)">{{ getStatusLabel(detailAnimal.status) }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="物种">{{ detailAnimal.species || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="品种">{{ detailAnimal.variety || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="性别">{{ getGenderLabel(detailAnimal.gender) }}</el-descriptions-item>
+          <el-descriptions-item label="出生日期">{{ formatDate(detailAnimal.birthDate, 'YYYY/MM/DD') }}</el-descriptions-item>
+          <el-descriptions-item label="栏舍ID">{{ detailAnimal.shedId ?? '-' }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDate(detailAnimal.createTime) }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间">{{ formatDate(detailAnimal.updateTime) }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-tabs v-if="detailCanViewDiseaseRecords" class="detail-tabs">
+          <el-tab-pane :label="`症状记录 (${symptomList.length})`" name="symptom">
+            <el-table v-loading="symptomLoading" :data="symptomList" border>
+              <el-table-column prop="id" label="ID" width="80" align="center" />
+              <el-table-column prop="symptomDesc" label="症状描述" min-width="260" show-overflow-tooltip />
+              <el-table-column prop="observeTime" label="发现时间" min-width="180" align="center">
+                <template #default="scope">
+                  {{ formatDate(scope.row.observeTime) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="status" label="状态" width="120" align="center">
+                <template #default="scope">
+                  <el-tag :type="scope.row.status === 1 ? 'success' : 'warning'">
+                    {{ scope.row.status === 1 ? '已诊断' : '待诊断' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="createTime" label="上报时间" min-width="180" align="center">
+                <template #default="scope">
+                  {{ formatDate(scope.row.createTime) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+
+          <el-tab-pane :label="`治疗记录 (${treatmentList.length})`" name="treatment">
+            <el-table v-loading="treatmentLoading" :data="treatmentList" border>
+              <el-table-column prop="id" label="ID" width="80" align="center" />
+              <el-table-column prop="diagnosisId" label="诊断ID" width="100" align="center" />
+              <el-table-column prop="medicineId" label="药品ID" width="100" align="center" />
+              <el-table-column prop="dosage" label="剂量" width="100" align="center" />
+              <el-table-column prop="treatmentTime" label="治疗时间" min-width="180" align="center">
+                <template #default="scope">
+                  {{ formatDate(scope.row.treatmentTime) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="result" label="治疗结果" min-width="260" show-overflow-tooltip />
+              <el-table-column prop="createTime" label="记录时间" min-width="180" align="center">
+                <template #default="scope">
+                  {{ formatDate(scope.row.createTime) }}
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+        </el-tabs>
+
+        <el-empty v-else class="detail-empty" description="当前账号暂无疾病记录查看权限" />
+      </div>
+
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="detailOpen = false">关 闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
 
+interface AnimalRecord {
+  id: number
+  earTag: string
+  species: string
+  variety: string
+  birthDate?: string
+  gender: number
+  shedId?: number
+  status: number
+  createTime?: string
+  updateTime?: string
+}
+
+interface SymptomRecord {
+  id: number
+  animalId: number
+  symptomDesc: string
+  observeTime?: string
+  status: number
+  createTime?: string
+}
+
+interface TreatmentRecord {
+  id: number
+  diagnosisId?: number
+  animalId: number
+  medicineId?: number
+  dosage?: number
+  treatmentTime?: string
+  result?: string
+  createTime?: string
+}
+
+interface AnimalDetailResponse {
+  animal: AnimalRecord
+  canViewDiseaseRecords: boolean
+  symptomList: SymptomRecord[]
+  treatmentList: TreatmentRecord[]
+}
+
 const userStore = useUserStore()
 const loading = ref(true)
-const animalList = ref([])
+const animalList = ref<AnimalRecord[]>([])
 const total = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
+const detailOpen = ref(false)
+const detailLoading = ref(false)
+const detailAnimal = ref<AnimalRecord | null>(null)
+const detailCanViewDiseaseRecords = ref(false)
+const symptomLoading = ref(false)
+const treatmentLoading = ref(false)
+const symptomList = ref<SymptomRecord[]>([])
+const treatmentList = ref<TreatmentRecord[]>([])
 
 const queryParams = reactive({
   page: 1,
@@ -145,6 +268,18 @@ const getStatusLabel = (status: number) => {
 const getStatusType = (status: number) => {
   const map: any = { 1: 'success', 2: 'danger', 3: 'warning', 4: 'info', 5: '' }
   return map[status] || 'info'
+}
+
+const getGenderLabel = (gender?: number) => {
+  if (gender === 1) return '公'
+  if (gender === 2) return '母'
+  return '-'
+}
+
+const formatDate = (dateStr?: string, format = 'YYYY/MM/DD HH:mm:ss') => {
+  if (!dateStr) return '-'
+  const parsed = dayjs(dateStr)
+  return parsed.isValid() ? parsed.format(format) : dateStr
 }
 
 const getList = async () => {
@@ -199,6 +334,25 @@ const handleUpdate = (row: any) => {
   title.value = '修改动物'
 }
 
+const handleDetail = async (row: AnimalRecord) => {
+  detailOpen.value = true
+  detailLoading.value = true
+  symptomLoading.value = true
+  treatmentLoading.value = true
+  try {
+    const res: any = await request.get(`/animal/detail/${row.id}`)
+    const detail: AnimalDetailResponse = res.data
+    detailAnimal.value = detail.animal
+    detailCanViewDiseaseRecords.value = detail.canViewDiseaseRecords
+    symptomList.value = detail.symptomList || []
+    treatmentList.value = detail.treatmentList || []
+  } finally {
+    symptomLoading.value = false
+    treatmentLoading.value = false
+    detailLoading.value = false
+  }
+}
+
 const submitForm = () => {
   formRef.value?.validate(async (valid: boolean) => {
     if (valid) {
@@ -215,14 +369,14 @@ const submitForm = () => {
   })
 }
 
-const handle删除 = (row: any) => {
-  ElMessageBox.confirm(`是否确认删除耳标号为"${row.earTag}"的数据项？`, '警告', {
-    confirmButtonText: '确定',
+const handleInvalidate = (row: AnimalRecord) => {
+  ElMessageBox.confirm(`是否确认作废耳标号为"${row.earTag}"的数据项？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+    confirmButtonText: '确定作废',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
-    await request.delete(`/animal/${row.id}`)
-    ElMessage.success('删除成功')
+    await request.put(`/animal/invalidate/${row.id}`)
+    ElMessage.success('作废成功')
     getList()
   }).catch(() => {})
 }
@@ -235,5 +389,13 @@ onMounted(() => {
 <style scoped>
 .app-container {
   padding: 20px;
+}
+
+.detail-tabs {
+  margin-top: 20px;
+}
+
+.detail-empty {
+  margin-top: 20px;
 }
 </style>

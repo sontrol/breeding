@@ -1,6 +1,9 @@
 <template>
   <div class="app-container">
     <el-card>
+      <template #header>
+        <div class="card-header">饲养计划</div>
+      </template>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
         <el-form-item label="栏舍ID">
           <el-input v-model="queryParams.shedId" placeholder="请输入栏舍ID" clearable />
@@ -17,7 +20,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="loading" :data="planList" style="width: 100%" border>
+      <el-table v-loading="planLoading" :data="planList" style="width: 100%" border>
         <el-table-column prop="id" label="计划ID" width="80" align="center" />
         <el-table-column prop="shedId" label="目标栏舍ID" align="center" />
         <el-table-column prop="feedType" label="饲料类型" align="center" />
@@ -25,26 +28,77 @@
         <el-table-column prop="feedingTime" label="计划投喂时间" align="center" />
         <el-table-column prop="status" label="状态" align="center">
           <template #default="scope">
-            <el-switch v-model="scope.row.status" :active-value="1" :inactive-value="0" @change="handleStatusChange(scope.row)" />
+            <el-switch
+              v-model="scope.row.status"
+              :active-value="1"
+              :inactive-value="0"
+              :disabled="!hasPerm('feeding:plan:status')"
+              @change="handleStatusChange(scope.row)"
+            />
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="150">
+        <el-table-column label="操作" align="center" width="260">
           <template #default="scope">
             <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('feeding:plan:edit')">修改</el-button>
+            <el-button size="small" type="danger" link icon="Delete" @click="handlePlanInvalidate(scope.row)" v-if="hasPerm('feeding:plan:invalidate')">作废</el-button>
             <el-button size="small" type="success" link icon="Check" @click="handleExecute(scope.row)" v-if="scope.row.status === 1 && hasPerm('feeding:record:add')">执行投喂</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+      <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="queryParams.page"
           v-model:page-size="queryParams.size"
           :page-sizes="[10, 20, 30, 50]"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
+          :total="planTotal"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
+
+    <el-card class="record-card">
+      <template #header>
+        <div class="card-header">饲养执行记录</div>
+      </template>
+      <el-form :inline="true" :model="recordQueryParams" class="demo-form-inline">
+        <el-form-item label="栏舍ID">
+          <el-input v-model="recordQueryParams.shedId" placeholder="请输入栏舍ID" clearable />
+        </el-form-item>
+        <el-form-item label="操作人ID">
+          <el-input v-model="recordQueryParams.operatorId" placeholder="请输入操作人ID" clearable />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleRecordQuery" icon="Search">查询</el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-table v-loading="recordLoading" :data="recordList" style="width: 100%" border>
+        <el-table-column prop="id" label="记录ID" width="80" align="center" />
+        <el-table-column prop="planId" label="计划ID" align="center" />
+        <el-table-column prop="shedId" label="栏舍ID" align="center" />
+        <el-table-column prop="feedType" label="饲料类型" align="center" />
+        <el-table-column prop="totalAmount" label="实际总投喂量(kg)" align="center" />
+        <el-table-column prop="operatorId" label="操作人ID" align="center" />
+        <el-table-column prop="executeTime" label="执行时间" align="center" min-width="180" />
+        <el-table-column label="操作" align="center" width="120">
+          <template #default="scope">
+            <el-button size="small" type="danger" link icon="Delete" @click="handleRecordInvalidate(scope.row)" v-if="hasPerm('feeding:record:invalidate')">作废</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="recordQueryParams.page"
+          v-model:page-size="recordQueryParams.size"
+          :page-sizes="[10, 20, 30, 50]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="recordTotal"
+          @size-change="handleRecordSizeChange"
+          @current-change="handleRecordCurrentChange"
         />
       </div>
     </el-card>
@@ -82,14 +136,37 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import dayjs from 'dayjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
 
+interface FeedingPlanRecord {
+  id: number
+  shedId: number | string
+  feedType: string
+  amountPerAnimal: number
+  feedingTime: string
+  status: number
+}
+
+interface FeedingExecuteRecord {
+  id: number
+  planId?: number
+  shedId: number
+  operatorId: number
+  feedType: string
+  totalAmount: number
+  executeTime: string
+}
+
 const userStore = useUserStore()
-const loading = ref(true)
-const planList = ref([])
-const total = ref(0)
+const planLoading = ref(true)
+const recordLoading = ref(true)
+const planList = ref<FeedingPlanRecord[]>([])
+const recordList = ref<FeedingExecuteRecord[]>([])
+const planTotal = ref(0)
+const recordTotal = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -97,8 +174,15 @@ const formRef = ref()
 const queryParams = reactive({
   page: 1,
   size: 10,
-  shedId: undefined,
-  status: undefined
+  shedId: undefined as number | undefined,
+  status: undefined as number | undefined
+})
+
+const recordQueryParams = reactive({
+  page: 1,
+  size: 10,
+  shedId: undefined as number | undefined,
+  operatorId: undefined as number | undefined
 })
 
 const form = reactive({
@@ -120,44 +204,103 @@ const hasPerm = (perm: string) => {
   return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
-const getList = async () => {
-  loading.value = true
+const getPlanList = async () => {
+  planLoading.value = true
   try {
     const res: any = await request.get('/feeding/plan/page', { params: queryParams })
     if (res.code === 200) {
       planList.value = res.data.records
-      total.value = res.data.total
+      planTotal.value = res.data.total
     }
   } finally {
-    loading.value = false
+    planLoading.value = false
+  }
+}
+
+const getRecordList = async () => {
+  recordLoading.value = true
+  try {
+    const res: any = await request.get('/feeding/record/page', { params: recordQueryParams })
+    if (res.code === 200) {
+      recordList.value = res.data.records
+      recordTotal.value = res.data.total
+    }
+  } finally {
+    recordLoading.value = false
   }
 }
 
 const handleQuery = () => {
   queryParams.page = 1
-  getList()
+  getPlanList()
+}
+
+const handleRecordQuery = () => {
+  recordQueryParams.page = 1
+  getRecordList()
 }
 
 const handleSizeChange = (val: number) => {
   queryParams.size = val
-  getList()
+  getPlanList()
 }
 
 const handleCurrentChange = (val: number) => {
   queryParams.page = val
-  getList()
+  getPlanList()
 }
 
-const handleStatusChange = async (row: any) => {
+const handleRecordSizeChange = (val: number) => {
+  recordQueryParams.size = val
+  getRecordList()
+}
+
+const handleRecordCurrentChange = (val: number) => {
+  recordQueryParams.page = val
+  getRecordList()
+}
+
+const handleStatusChange = async (row: FeedingPlanRecord) => {
+  const originalStatus = row.status === 1 ? 0 : 1
   try {
-    await request.put('/feeding/plan', { id: row.id, status: row.status })
+    await request.put('/feeding/plan/status', { id: row.id, status: row.status })
     ElMessage.success('状态修改成功')
   } catch {
-    row.status = row.status === 1 ? 0 : 1
+    row.status = originalStatus
   }
 }
 
-const handleExecute = (row: any) => {
+const handlePlanInvalidate = async (row: FeedingPlanRecord) => {
+  try {
+    await ElMessageBox.confirm(`确认作废饲养计划 #${row.id} 吗？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+      type: 'warning',
+      confirmButtonText: '确认作废',
+      cancelButtonText: '取消'
+    })
+    await request.put(`/feeding/plan/invalidate/${row.id}`)
+    ElMessage.success('作废成功')
+    getPlanList()
+  } catch {
+    // ignore cancel action
+  }
+}
+
+const handleRecordInvalidate = async (row: FeedingExecuteRecord) => {
+  try {
+    await ElMessageBox.confirm(`确认作废饲养执行记录 #${row.id} 吗？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+      type: 'warning',
+      confirmButtonText: '确认作废',
+      cancelButtonText: '取消'
+    })
+    await request.put(`/feeding/record/invalidate/${row.id}`)
+    ElMessage.success('作废成功')
+    getRecordList()
+  } catch {
+    // ignore cancel action
+  }
+}
+
+const handleExecute = (row: FeedingPlanRecord) => {
   ElMessageBox.prompt('请输入本次实际总投喂量(kg)', '执行投喂记录', {
     confirmButtonText: '确认执行',
     cancelButtonText: '取消',
@@ -170,10 +313,11 @@ const handleExecute = (row: any) => {
       feedType: row.feedType,
       operatorId: userStore.userInfo.userId,
       totalAmount: value,
-      executeTime: new Date().toISOString()
+      executeTime: dayjs().format('YYYY/MM/DD HH:mm:ss')
     }
     await request.post('/feeding/record', record)
     ElMessage.success('投喂记录已生成')
+    getRecordList()
   }).catch(() => {})
 }
 
@@ -188,7 +332,7 @@ const handle新增 = () => {
   title.value = '添加饲养计划'
 }
 
-const handleUpdate = (row: any) => {
+const handleUpdate = (row: FeedingPlanRecord) => {
   reset()
   Object.assign(form, row)
   open.value = true
@@ -211,18 +355,33 @@ const submitForm = () => {
         ElMessage.success('新增成功')
       }
       open.value = false
-      getList()
+      getPlanList()
     }
   })
 }
 
 onMounted(() => {
-  getList()
+  getPlanList()
+  getRecordList()
 })
 </script>
 
 <style scoped>
 .app-container {
   padding: 20px;
+}
+
+.record-card {
+  margin-top: 20px;
+}
+
+.pagination-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.card-header {
+  font-weight: 600;
 }
 </style>

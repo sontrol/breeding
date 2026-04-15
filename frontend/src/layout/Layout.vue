@@ -84,6 +84,10 @@
             <el-icon><User /></el-icon>
             <span>用户管理</span>
           </el-menu-item>
+          <el-menu-item index="/system/invalid" v-if="hasPerm('system:invalid:view')">
+            <el-icon><DeleteFilled /></el-icon>
+            <span>作废数据</span>
+          </el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/register-audit/list" v-if="hasPerm('system:register:view')">
           <el-icon><Finished /></el-icon>

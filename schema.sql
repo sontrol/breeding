@@ -15,6 +15,7 @@ DROP TABLE IF EXISTS symptom;
 DROP TABLE IF EXISTS feeding_record;
 DROP TABLE IF EXISTS feeding_plan;
 DROP TABLE IF EXISTS event;
+DROP TABLE IF EXISTS invalid_record;
 DROP TABLE IF EXISTS animal_status_log;
 DROP TABLE IF EXISTS animal;
 DROP TABLE IF EXISTS shed;
@@ -40,6 +41,9 @@ CREATE TABLE user (
     audit_remark VARCHAR(255) COMMENT '审核备注',
     audit_by BIGINT COMMENT '审核人ID',
     audit_time DATETIME COMMENT '审核时间',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '系统用户表';
@@ -97,6 +101,9 @@ CREATE TABLE animal (
     gender TINYINT COMMENT '1:公, 2:母',
     shed_id BIGINT COMMENT '当前所在栏舍ID',
     status TINYINT DEFAULT 1 COMMENT '1:健康, 2:患病, 3:隔离, 4:死亡, 5:出栏',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '动物档案表';
@@ -122,6 +129,9 @@ CREATE TABLE event (
     operator_id BIGINT NOT NULL COMMENT '操作人ID',
     description TEXT COMMENT '事件详情描述',
     related_id BIGINT COMMENT '关联的具体业务单据ID',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '事件中心表(统一记录所有动物生命周期事件)';
 
@@ -135,6 +145,9 @@ CREATE TABLE feeding_plan (
     amount_per_animal DECIMAL(10,2) NOT NULL COMMENT '每只动物投喂量(kg)',
     feeding_time TIME NOT NULL COMMENT '计划投喂时间',
     status TINYINT DEFAULT 1 COMMENT '1:启用, 0:停用',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '饲养计划表';
 
@@ -146,6 +159,9 @@ CREATE TABLE feeding_record (
     feed_type VARCHAR(50) NOT NULL,
     total_amount DECIMAL(10,2) NOT NULL COMMENT '总投喂量(kg)',
     execute_time DATETIME NOT NULL COMMENT '实际执行时间',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '饲养执行记录';
 
@@ -159,6 +175,9 @@ CREATE TABLE symptom (
     symptom_desc TEXT NOT NULL COMMENT '症状描述',
     observe_time DATETIME NOT NULL COMMENT '发现时间',
     status TINYINT DEFAULT 0 COMMENT '0:待诊断, 1:已诊断',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '症状记录表';
 
@@ -171,6 +190,9 @@ CREATE TABLE diagnosis (
     severity TINYINT COMMENT '1:轻微, 2:中度, 3:严重',
     diagnose_time DATETIME NOT NULL COMMENT '诊断时间',
     status TINYINT DEFAULT 0 COMMENT '0:治疗中, 1:已治愈, 2:死亡',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '诊断记录表';
 
@@ -183,6 +205,9 @@ CREATE TABLE treatment (
     dosage DECIMAL(10,2) NOT NULL COMMENT '用药剂量',
     treatment_time DATETIME NOT NULL COMMENT '治疗时间',
     result VARCHAR(200) COMMENT '治疗效果观察',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP
 ) COMMENT '治疗/用药记录表';
 
@@ -220,6 +245,9 @@ CREATE TABLE inventory (
     unit VARCHAR(20) NOT NULL COMMENT '单位(kg/盒/支)',
     produce_date DATE COMMENT '生产日期',
     expire_date DATE NOT NULL COMMENT '过期时间',
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_item_batch (item_name, batch_number)
 ) COMMENT '库存表(支持批次和过期时间)';
@@ -244,9 +272,25 @@ CREATE TABLE alert (
     alert_msg TEXT NOT NULL COMMENT '预警内容',
     status TINYINT DEFAULT 0 COMMENT '0:未处理, 1:已处理',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    creator_id BIGINT COMMENT '提交人ID',
     handle_time DATETIME,
-    handler_id BIGINT
+    handler_id BIGINT,
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    delete_by BIGINT COMMENT '作废人ID',
+    delete_time DATETIME COMMENT '作废时间'
 ) COMMENT '系统预警表';
+
+CREATE TABLE invalid_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    data_id BIGINT NOT NULL COMMENT '原始数据ID',
+    data_type VARCHAR(50) NOT NULL COMMENT '作废数据类型',
+    module_name VARCHAR(50) NOT NULL COMMENT '作废前所在页面',
+    display_name VARCHAR(200) NOT NULL COMMENT '展示标题',
+    deleted_by BIGINT NOT NULL COMMENT '作废人ID',
+    deleted_by_name VARCHAR(50) COMMENT '作废人名称',
+    deleted_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '作废时间',
+    UNIQUE KEY uk_invalid_target (data_type, data_id)
+) COMMENT '作废数据记录表';
 
 CREATE TABLE operation_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -279,7 +323,7 @@ INSERT INTO role (id, role_name, role_code, description) VALUES
 (1, '管理员', 'admin', '系统管理员，拥有全部权限'),
 (2, '牧场主', 'owner', '负责养殖经营与看板分析'),
 (3, '兽医', 'vet', '负责疾病诊断与治疗'),
-(4, '饲养员', 'feeder', '负责日常饲养与预警查看');
+(4, '饲养员', 'feeder', '负责日常饲养');
 
 INSERT INTO permission (id, parent_id, name, code, type, path, sort) VALUES
 (10, 0, '数据看板', 'dashboard:view', 1, '/dashboard', 10),
@@ -288,25 +332,36 @@ INSERT INTO permission (id, parent_id, name, code, type, path, sort) VALUES
 (101, 100, '新增动物', 'animal:add', 2, NULL, 101),
 (102, 100, '修改动物', 'animal:edit', 2, NULL, 102),
 (103, 100, '删除动物', 'animal:delete', 2, NULL, 103),
+(104, 100, '作废动物', 'animal:invalidate', 2, NULL, 104),
 (200, 0, '饲养管理', 'feeding:view', 1, '/feeding', 200),
 (201, 200, '饲养操作', 'feeding:add', 2, NULL, 201),
 (202, 200, '新增饲养计划', 'feeding:plan:add', 2, NULL, 202),
 (203, 200, '修改饲养计划', 'feeding:plan:edit', 2, NULL, 203),
 (204, 200, '录入饲养记录', 'feeding:record:add', 2, NULL, 204),
+(205, 200, '调整计划状态', 'feeding:plan:status', 2, NULL, 205),
+(206, 200, '删除饲养计划', 'feeding:plan:delete', 2, NULL, 206),
+(207, 200, '作废饲养计划', 'feeding:plan:invalidate', 2, NULL, 207),
+(208, 200, '作废饲养记录', 'feeding:record:invalidate', 2, NULL, 208),
 (300, 0, '疾病管理', 'disease:view', 1, '/disease', 300),
 (301, 300, '记录疾病', 'disease:add', 2, NULL, 301),
 (302, 300, '疾病诊断', 'diagnosis:add', 2, NULL, 302),
 (303, 300, '疾病治疗', 'treatment:add', 2, NULL, 303),
 (304, 300, '疫苗录入', 'vaccine:add', 2, NULL, 304),
+(305, 300, '作废症状', 'symptom:invalidate', 2, NULL, 305),
+(306, 300, '作废诊断', 'diagnosis:invalidate', 2, NULL, 306),
+(307, 300, '作废治疗', 'treatment:invalidate', 2, NULL, 307),
 (350, 0, '事件中心', 'event:view', 1, '/event', 350),
 (351, 350, '记录事件', 'event:add', 2, NULL, 351),
 (400, 0, '预警中心', 'alert:view', 1, '/alert', 400),
 (401, 400, '处理预警', 'alert:handle', 2, NULL, 401),
 (402, 400, '触发检测', 'alert:check', 2, NULL, 402),
+(403, 400, '提交预警', 'alert:add', 2, NULL, 403),
+(404, 400, '作废预警', 'alert:invalidate', 2, NULL, 404),
 (500, 0, '库存管理', 'inventory:view', 1, '/inventory', 500),
 (501, 500, '新增库存', 'inventory:add', 2, NULL, 501),
 (502, 500, '修改库存', 'inventory:edit', 2, NULL, 502),
 (503, 500, '删除库存', 'inventory:delete', 2, NULL, 503),
+(504, 500, '作废库存', 'inventory:invalidate', 2, NULL, 504),
 (600, 0, '批次管理', 'batch:add', 2, NULL, 600),
 (601, 0, '出栏管理', 'sale:add', 2, NULL, 601),
 (700, 0, 'AI助手', 'ai:view', 1, '/ai', 700),
@@ -317,22 +372,24 @@ INSERT INTO permission (id, parent_id, name, code, type, path, sort) VALUES
 (804, 800, '系统全权限', 'system:*', 2, NULL, 804),
 (805, 800, '注册审核页面', 'system:register:view', 1, '/register-audit', 805),
 (806, 805, '通过注册申请', 'system:register:approve', 2, NULL, 806),
-(807, 805, '驳回注册申请', 'system:register:reject', 2, NULL, 807);
+(807, 805, '驳回注册申请', 'system:register:reject', 2, NULL, 807),
+(808, 800, '作废数据页面', 'system:invalid:view', 1, '/system/invalid', 808),
+(809, 808, '恢复作废数据', 'system:invalid:restore', 2, NULL, 809);
 
 INSERT INTO role_permission (role_id, permission_id) VALUES
-(1, 10), (1, 11), (1, 100), (1, 101), (1, 102), (1, 103),
-(1, 200), (1, 201), (1, 202), (1, 203), (1, 204),
-(1, 300), (1, 301), (1, 302), (1, 303), (1, 304),
+ (1, 10), (1, 11), (1, 100), (1, 101), (1, 102), (1, 103), (1, 104),
+ (1, 200), (1, 201), (1, 202), (1, 203), (1, 204), (1, 205), (1, 206), (1, 207), (1, 208),
+ (1, 300), (1, 301), (1, 302), (1, 303), (1, 304), (1, 305), (1, 306), (1, 307),
 (1, 350), (1, 351),
-(1, 400), (1, 401), (1, 402),
-(1, 500), (1, 501), (1, 502), (1, 503),
+ (1, 400), (1, 401), (1, 402), (1, 403), (1, 404),
+ (1, 500), (1, 501), (1, 502), (1, 503), (1, 504),
 (1, 600), (1, 601), (1, 700),
-(1, 800), (1, 801), (1, 802), (1, 803), (1, 804), (1, 805), (1, 806), (1, 807),
+ (1, 800), (1, 801), (1, 802), (1, 803), (1, 804), (1, 805), (1, 806), (1, 807), (1, 808), (1, 809),
 (2, 10), (2, 11), (2, 100), (2, 101), (2, 102),
-(2, 200), (2, 201), (2, 202), (2, 700), (2, 805), (2, 806), (2, 807),
-(2, 300), (2, 350), (2, 600), (2, 601),
-(3, 100), (3, 300), (3, 301), (3, 302), (3, 303), (3, 304), (3, 700),
-(4, 100), (4, 200), (4, 201), (4, 204), (4, 400), (4, 700);
+(2, 200), (2, 201), (2, 202), (2, 205), (2, 206), (2, 700), (2, 805), (2, 806), (2, 807),
+(2, 300), (2, 350), (2, 400), (2, 401), (2, 402), (2, 403), (2, 600), (2, 601),
+(3, 100), (3, 300), (3, 301), (3, 302), (3, 303), (3, 304), (3, 400), (3, 403), (3, 700),
+(4, 100), (4, 200), (4, 201), (4, 204), (4, 400), (4, 403), (4, 700);
 
 INSERT INTO user (id, username, password, real_name, phone, status, audit_status) VALUES
 (1, 'admin', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '系统管理员', '13800000000', 1, 1),
@@ -410,7 +467,7 @@ INSERT INTO event (id, animal_id, event_type, event_time, operator_id, descripti
 (4, 3, 'vaccine', DATE_SUB(NOW(), INTERVAL 20 DAY), 3, '完成口蹄疫疫苗接种', 2),
 (5, 5, 'feeding', DATE_SUB(NOW(), INTERVAL 1 HOUR), 4, '新生羔羊补充营养', NULL);
 
-INSERT INTO alert (id, rule_type, target_id, alert_msg, status, create_time, handle_time, handler_id) VALUES
-(1, 'medicine_expire', 2, '氟苯尼考注射液库存请在到期前完成使用计划核查', 0, DATE_SUB(NOW(), INTERVAL 6 HOUR), NULL, NULL),
-(2, 'temperature_anomaly', 4, '耳标 EAR2026004 体温异常，请兽医复检', 1, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_SUB(NOW(), INTERVAL 12 HOUR), 3),
-(3, 'no_food_long', 2, '耳标 EAR2026002 近 6 小时采食异常偏低', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), NULL, NULL);
+INSERT INTO alert (id, rule_type, target_id, alert_msg, status, create_time, creator_id, handle_time, handler_id) VALUES
+(1, 'medicine_expire', 2, '氟苯尼考注射液库存请在到期前完成使用计划核查', 0, DATE_SUB(NOW(), INTERVAL 6 HOUR), NULL, NULL, NULL),
+(2, 'temperature_anomaly', 4, '耳标 EAR2026004 体温异常，请兽医复检', 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 3, DATE_SUB(NOW(), INTERVAL 12 HOUR), 3),
+(3, 'no_food_long', 2, '耳标 EAR2026002 近 6 小时采食异常偏低', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), 4, NULL, NULL);

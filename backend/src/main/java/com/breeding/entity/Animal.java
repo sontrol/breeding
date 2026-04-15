@@ -2,6 +2,7 @@ package com.breeding.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -23,6 +24,8 @@ public class Animal {
     private Integer gender;
     private Long shedId;
     private Integer status; // 1:健康, 2:患病, 3:隔离, 4:死亡, 5:出栏
+    @TableLogic
+    private Integer deleted;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")

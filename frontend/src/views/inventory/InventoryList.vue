@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
+﻿﻿﻿﻿﻿﻿﻿﻿﻿<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
@@ -35,6 +35,11 @@
         <el-table-column prop="expireDate" label="过期时间" align="center">
           <template #default="scope">
             <span :class="{'text-danger': isExpired(scope.row.expireDate)}">{{ formatDate(scope.row.expireDate) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" align="center" width="120">
+          <template #default="scope">
+            <el-button size="small" type="danger" link icon="Delete" @click="handleInvalidate(scope.row)" v-if="hasPerm('inventory:invalidate')">作废</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -91,7 +96,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
 
@@ -203,6 +208,18 @@ const submitForm = () => {
       getList()
     }
   })
+}
+
+const handleInvalidate = (row: any) => {
+  ElMessageBox.confirm(`是否确认作废物品"${row.itemName}"（批次：${row.batchNumber}）？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+    confirmButtonText: '确定作废',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(async () => {
+    await request.put(`/inventory/invalidate/${row.id}`)
+    ElMessage.success('作废成功')
+    getList()
+  }).catch(() => {})
 }
 
 onMounted(() => {

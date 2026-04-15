@@ -78,7 +78,7 @@ public class AIDataAccessLayer {
         }
 
         // 6. 预警数据访问权限校验
-        if (hasPermission(permissions, "alert:view", "alert:handle", "alert:check", "system:*", "ROLE_admin", "ROLE_feeder")) {
+        if (hasPermission(permissions, "alert:view", "alert:add", "alert:handle", "alert:check", "system:*", "ROLE_admin", "ROLE_owner", "ROLE_vet", "ROLE_feeder")) {
             contextData.put("alert_total", alertService.count());
             accessedModules.add("alert");
         }

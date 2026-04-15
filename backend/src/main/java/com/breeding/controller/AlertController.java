@@ -3,8 +3,11 @@ package com.breeding.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
+import com.breeding.dto.alert.AlertCreateDTO;
 import com.breeding.entity.Alert;
 import com.breeding.service.AlertService;
+import com.breeding.service.InvalidDataService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +20,25 @@ public class AlertController {
 
     @Autowired
     private AlertService alertService;
+
+    @Autowired
+    private InvalidDataService invalidDataService;
+
+    @PostMapping
+    @PreAuthorize("hasAuthority('alert:add')")
+    public Result<Boolean> addAlert(@Valid @RequestBody AlertCreateDTO alertCreateDTO) {
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Alert alert = new Alert();
+        alert.setRuleType(alertCreateDTO.getRuleType());
+        alert.setTargetId(alertCreateDTO.getTargetId());
+        alert.setAlertMsg(alertCreateDTO.getAlertMsg().trim());
+        alert.setStatus(0);
+        alert.setCreateTime(LocalDateTime.now());
+        alert.setCreatorId(loginUser.getUser().getId());
+
+        return alertService.save(alert) ? Result.success() : Result.error("提交预警失败");
+    }
 
     @GetMapping("/page")
     @PreAuthorize("hasAuthority('alert:view')")
@@ -50,5 +72,17 @@ public class AlertController {
     public Result<Boolean> manualTriggerCheck() {
         alertService.checkInventoryExpire();
         return Result.success();
+    }
+
+    @PutMapping("/invalidate/{id}")
+    @PreAuthorize("hasAuthority('alert:invalidate')")
+    public Result<Boolean> invalidate(@PathVariable Long id) {
+        try {
+            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            boolean success = invalidDataService.invalidate("alert", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
+            return success ? Result.success() : Result.error("作废预警失败");
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
     }
 }

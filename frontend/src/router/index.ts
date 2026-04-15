@@ -132,6 +132,12 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: 'UserList',
         component: () => import('../views/system/UserList.vue'),
         meta: { title: '用户管理', icon: 'User' }
+      },
+      {
+        path: 'invalid',
+        name: 'InvalidDataList',
+        component: () => import('../views/system/InvalidDataList.vue'),
+        meta: { title: '作废数据', icon: 'DeleteFilled', permission: 'system:invalid:view' }
       }
     ]
   },
