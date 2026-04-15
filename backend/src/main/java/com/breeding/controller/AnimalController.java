@@ -1,4 +1,4 @@
-﻿﻿package com.breeding.controller;
+﻿package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.breeding.common.Result;

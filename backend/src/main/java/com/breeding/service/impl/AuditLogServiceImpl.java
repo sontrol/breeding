@@ -1,4 +1,4 @@
-﻿package com.breeding.service.impl;
+package com.breeding.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.breeding.entity.AuditLog;
