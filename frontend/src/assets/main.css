@@ -1,4 +1,4 @@
-/* 基础样式重置与全局变量 */
+﻿/* 基础样式重置与全局变量 */
 :root {
   --el-color-primary: #409eff;
   --bg-color: #f0f2f5;
@@ -38,7 +38,7 @@ html, body {
 
 /* 常用辅助类 */
 .text-center {
-  text-center: center;
+  text-align: center;
 }
 
 .mt-20 {
