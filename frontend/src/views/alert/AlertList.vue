@@ -272,7 +272,7 @@ const handleManualCheck = async () => {
 }
 
 const handleInvalidate = (row: any) => {
-  ElMessageBox.confirm(`确定作废预警记录 #${row.id} 吗？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+  ElMessageBox.confirm(`确定作废预警记录 #${row.id} 吗？作废后仅可由管理员恢复。`, '作废确认', {
     confirmButtonText: '确定作废',
     cancelButtonText: '取消',
     type: 'warning'
@@ -296,3 +296,4 @@ onMounted(() => {
   --el-table-tr-bg-color: var(--el-color-warning-light-9);
 }
 </style>
+

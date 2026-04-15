@@ -207,7 +207,7 @@ const handleDiagnosis = (row: any) => {
 }
 
 const handleInvalidate = (row: any) => {
-  ElMessageBox.confirm(`是否确认作废症状记录 #${row.id}？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+  ElMessageBox.confirm(`是否确认作废症状记录 #${row.id}？作废后仅可由管理员恢复。`, '作废确认', {
     confirmButtonText: '确定作废',
     cancelButtonText: '取消',
     type: 'warning'

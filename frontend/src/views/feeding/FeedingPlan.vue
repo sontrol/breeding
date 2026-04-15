@@ -272,7 +272,7 @@ const handleStatusChange = async (row: FeedingPlanRecord) => {
 
 const handlePlanInvalidate = async (row: FeedingPlanRecord) => {
   try {
-    await ElMessageBox.confirm(`确认作废饲养计划 #${row.id} 吗？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+    await ElMessageBox.confirm(`确认作废饲养计划 #${row.id} 吗？作废后仅可由管理员恢复。`, '作废确认', {
       type: 'warning',
       confirmButtonText: '确认作废',
       cancelButtonText: '取消'
@@ -287,7 +287,7 @@ const handlePlanInvalidate = async (row: FeedingPlanRecord) => {
 
 const handleRecordInvalidate = async (row: FeedingExecuteRecord) => {
   try {
-    await ElMessageBox.confirm(`确认作废饲养执行记录 #${row.id} 吗？作废后仅会在系统管理/作废数据中显示。`, '作废确认', {
+    await ElMessageBox.confirm(`确认作废饲养执行记录 #${row.id} 吗？作废后仅可由管理员恢复。`, '作废确认', {
       type: 'warning',
       confirmButtonText: '确认作废',
       cancelButtonText: '取消'

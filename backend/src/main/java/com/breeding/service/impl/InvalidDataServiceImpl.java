@@ -11,8 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class InvalidDataServiceImpl extends ServiceImpl<InvalidRecordMapper, InvalidRecord> implements InvalidDataService {
@@ -119,10 +122,14 @@ public class InvalidDataServiceImpl extends ServiceImpl<InvalidRecordMapper, Inv
         if (meta == null) {
             throw new IllegalArgumentException("不支持的作废数据类型");
         }
+        if (!ARCHIVE_TABLE_NAME_WHITELIST.contains(meta.tableName)) {
+            throw new IllegalStateException("检测到非法归档表配置");
+        }
         return meta;
     }
 
     private static final Map<String, ArchiveMeta> ARCHIVE_META_MAP = buildArchiveMetaMap();
+    private static final Set<String> ARCHIVE_TABLE_NAME_WHITELIST = buildArchiveTableNameWhitelist();
 
     private static Map<String, ArchiveMeta> buildArchiveMetaMap() {
         Map<String, ArchiveMeta> map = new HashMap<>();
@@ -141,8 +148,26 @@ public class InvalidDataServiceImpl extends ServiceImpl<InvalidRecordMapper, Inv
         map.put("inventory", new ArchiveMeta("inventory", "库存列表",
                 "CONCAT(IFNULL(item_name, '-'), ' / 批次:', IFNULL(batch_number, '-'))"));
         map.put("alert", new ArchiveMeta("alert", "预警消息",
-                "CONCAT('预警#', id, ' / 类型:', IFNULL(rule_type, '-'))"));
+                "CONCAT('预警#', id, ' / 类型:', " + buildAlertRuleTypeDisplaySql() + ")"));
         return map;
+    }
+
+    private static String buildAlertRuleTypeDisplaySql() {
+        return "CASE rule_type " +
+                "WHEN 'temperature_anomaly' THEN '体温异常' " +
+                "WHEN 'medicine_expire' THEN '物品过期预警' " +
+                "WHEN 'no_food_long' THEN '未进食异常' " +
+                "WHEN 'death_rate_high' THEN '死亡率异常' " +
+                "WHEN 'manual_report' THEN '人工上报' " +
+                "ELSE IFNULL(rule_type, '-') END";
+    }
+
+    private static Set<String> buildArchiveTableNameWhitelist() {
+        Set<String> whitelist = new HashSet<>();
+        for (ArchiveMeta meta : ARCHIVE_META_MAP.values()) {
+            whitelist.add(meta.tableName);
+        }
+        return Collections.unmodifiableSet(whitelist);
     }
 
     private static class ArchiveMeta {
