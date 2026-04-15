@@ -2,6 +2,7 @@ package com.breeding.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.UserRoleConstants;
 import com.breeding.dto.user.RegisterAuditDTO;
 import com.breeding.entity.Role;
 import com.breeding.entity.User;
@@ -17,13 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class RegisterAuditServiceImpl implements RegisterAuditService {
-
-    private static final Set<String> ALLOWED_ROLE_CODES = Set.of("owner", "vet", "feeder");
 
     @Autowired
     private UserMapper userMapper;
@@ -64,7 +62,7 @@ public class RegisterAuditServiceImpl implements RegisterAuditService {
     public void approve(RegisterAuditDTO auditDTO, Long auditorId) {
         User user = getPendingUser(auditDTO.getUserId());
         String roleCode = user.getApplyRoleCode();
-        if (!ALLOWED_ROLE_CODES.contains(roleCode)) {
+        if (!UserRoleConstants.isRegisterRole(roleCode)) {
             throw new IllegalArgumentException("待审核用户的申请角色不合法");
         }
 

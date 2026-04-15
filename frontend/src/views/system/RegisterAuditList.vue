@@ -10,9 +10,7 @@
         </el-form-item>
         <el-form-item label="申请角色">
           <el-select v-model="queryParams.applyRoleCode" placeholder="请选择角色" clearable style="width: 160px">
-            <el-option label="牧场主" value="owner" />
-            <el-option label="兽医" value="vet" />
-            <el-option label="饲养员" value="feeder" />
+            <el-option v-for="item in registerRoleOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="审核状态">
@@ -102,6 +100,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
+import { registerRoleOptions } from '@/constants/user'
 import { useUserStore } from '@/store/user'
 
 interface RegisterAuditRecord {

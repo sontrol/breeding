@@ -1,6 +1,7 @@
 package com.breeding.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.breeding.common.UserRoleConstants;
 import com.breeding.dto.auth.RegisterDTO;
 import com.breeding.entity.User;
 import com.breeding.mapper.UserMapper;
@@ -10,12 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
-
 @Service
 public class RegisterServiceImpl implements RegisterService {
-
-    private static final Set<String> ALLOWED_ROLE_CODES = Set.of("owner", "vet", "feeder");
 
     @Autowired
     private UserMapper userMapper;
@@ -27,7 +24,7 @@ public class RegisterServiceImpl implements RegisterService {
     @Transactional(rollbackFor = Exception.class)
     public void submit(RegisterDTO registerDTO) {
         String roleCode = registerDTO.getRoleCode();
-        if (!ALLOWED_ROLE_CODES.contains(roleCode)) {
+        if (!UserRoleConstants.isRegisterRole(roleCode)) {
             throw new IllegalArgumentException("申请的用户类型不合法");
         }
 

@@ -1,6 +1,7 @@
 package com.breeding.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -23,6 +24,8 @@ public class User {
     private Integer auditStatus;
     private String auditRemark;
     private Long auditBy;
+    @TableField(exist = false)
+    private String roleCode;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime auditTime;
     @TableLogic

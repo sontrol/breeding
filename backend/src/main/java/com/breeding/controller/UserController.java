@@ -27,8 +27,9 @@ public class UserController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String username,
-            @RequestParam(required = false) String realName) {
-        Page<User> resultPage = userService.getUserPage(page, size, username, realName);
+            @RequestParam(required = false) String realName,
+            @RequestParam(required = false) String roleCode) {
+        Page<User> resultPage = userService.getUserPage(page, size, username, realName, roleCode);
         return Result.success(resultPage);
     }
 
@@ -36,7 +37,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('system:user:add')")
     public Result<Boolean> add(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userService.save(user) ? Result.success() : Result.error("新增用户失败");
+        return userService.saveUserWithRole(user) ? Result.success() : Result.error("新增用户失败");
     }
 
     @PutMapping
@@ -47,7 +48,7 @@ public class UserController {
         } else {
             user.setPassword(null);
         }
-        return userService.updateById(user) ? Result.success() : Result.error("修改用户失败");
+        return userService.saveUserWithRole(user) ? Result.success() : Result.error("修改用户失败");
     }
 
     @DeleteMapping("/{id}")

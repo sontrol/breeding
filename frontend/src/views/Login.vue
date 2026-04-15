@@ -34,9 +34,7 @@
         </el-form-item>
         <el-form-item label="用户类型" prop="roleCode">
           <el-select v-model="registerForm.roleCode" placeholder="请选择申请角色" style="width: 100%">
-            <el-option label="牧场主" value="owner" />
-            <el-option label="兽医" value="vet" />
-            <el-option label="饲养员" value="feeder" />
+            <el-option v-for="item in registerRoleOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -54,6 +52,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { registerRoleOptions } from '@/constants/user'
 
 const router = useRouter()
 const userStore = useUserStore()
