@@ -16,7 +16,7 @@ public class Event {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long animalId;
-    private String eventType; 
+    private String eventType;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime eventTime;
     private Long operatorId;

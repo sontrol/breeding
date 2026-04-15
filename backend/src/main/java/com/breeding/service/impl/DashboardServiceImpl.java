@@ -53,7 +53,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .in("status", 2, 3));
         result.put("sickAndIsolated", sickAndIsolated);
 
-        // 本月出栏 (状态为 5:出栏 且 更新时间在本月)
+        // 本月出栏 (状态为 5:出栏 且更新时间在本月)
         String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         Long outThisMonth = animalMapper.selectCount(new QueryWrapper<com.breeding.entity.Animal>()
                 .eq("status", 5)

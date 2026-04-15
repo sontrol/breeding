@@ -35,6 +35,11 @@ CREATE TABLE user (
     real_name VARCHAR(50),
     phone VARCHAR(20),
     status TINYINT DEFAULT 1 COMMENT '1:正常, 0:禁用',
+    apply_role_code VARCHAR(50) COMMENT '注册申请角色编码',
+    audit_status TINYINT DEFAULT 1 COMMENT '0:待审核, 1:已通过, 2:已驳回',
+    audit_remark VARCHAR(255) COMMENT '审核备注',
+    audit_by BIGINT COMMENT '审核人ID',
+    audit_time DATETIME COMMENT '审核时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '系统用户表';
@@ -307,7 +312,10 @@ INSERT INTO permission (id, parent_id, name, code, type, path, sort) VALUES
 (801, 800, '新增用户', 'system:user:add', 2, NULL, 801),
 (802, 800, '修改用户', 'system:user:edit', 2, NULL, 802),
 (803, 800, '删除用户', 'system:user:delete', 2, NULL, 803),
-(804, 800, '系统全权限', 'system:*', 2, NULL, 804);
+(804, 800, '系统全权限', 'system:*', 2, NULL, 804),
+(805, 800, '注册审核页面', 'system:register:view', 1, '/register-audit', 805),
+(806, 805, '通过注册申请', 'system:register:approve', 2, NULL, 806),
+(807, 805, '驳回注册申请', 'system:register:reject', 2, NULL, 807);
 
 INSERT INTO role_permission (role_id, permission_id) VALUES
 (1, 10), (1, 11), (1, 100), (1, 101), (1, 102), (1, 103),
@@ -316,18 +324,18 @@ INSERT INTO role_permission (role_id, permission_id) VALUES
 (1, 400), (1, 401), (1, 402),
 (1, 500), (1, 501), (1, 502), (1, 503),
 (1, 600), (1, 601), (1, 700),
-(1, 800), (1, 801), (1, 802), (1, 803), (1, 804),
+(1, 800), (1, 801), (1, 802), (1, 803), (1, 804), (1, 805), (1, 806), (1, 807),
 (2, 10), (2, 11), (2, 100), (2, 101), (2, 102),
-(2, 200), (2, 201), (2, 202),
+(2, 200), (2, 201), (2, 202), (2, 805), (2, 806), (2, 807),
 (2, 300), (2, 600), (2, 601),
 (3, 100), (3, 300), (3, 301), (3, 302), (3, 303), (3, 304),
 (4, 100), (4, 200), (4, 201), (4, 204), (4, 400);
 
-INSERT INTO user (id, username, password, real_name, phone, status) VALUES
-(1, 'admin', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '系统管理员', '13800000000', 1),
-(2, 'owner1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '牧场主一号', '13800000001', 1),
-(3, 'vet1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '兽医一号', '13800000002', 1),
-(4, 'feeder1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '饲养员一号', '13800000003', 1);
+INSERT INTO user (id, username, password, real_name, phone, status, audit_status) VALUES
+(1, 'admin', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '系统管理员', '13800000000', 1, 1),
+(2, 'owner1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '牧场主一号', '13800000001', 1, 1),
+(3, 'vet1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '兽医一号', '13800000002', 1, 1),
+(4, 'feeder1', '$2a$10$..jwM3xAH8aadde2ap0klugkyaBGEtIMJ8DBTqlbhm36JxIxejWvK', '饲养员一号', '13800000003', 1, 1);
 
 INSERT INTO user_role (user_id, role_id) VALUES
 (1, 1),

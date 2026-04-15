@@ -12,8 +12,39 @@
         <el-form-item>
           <el-button type="primary" @click="handleLogin" class="login-btn" :loading="loading">登录</el-button>
         </el-form-item>
+        <el-form-item>
+          <el-button plain @click="openRegisterDialog" class="login-btn">注册申请</el-button>
+        </el-form-item>
       </el-form>
     </el-card>
+
+    <el-dialog v-model="registerDialogVisible" title="注册申请" width="520px" destroy-on-close>
+      <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-width="100px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="registerForm.username" placeholder="请输入登录用户名" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="registerForm.password" type="password" show-password placeholder="请输入登录密码" />
+        </el-form-item>
+        <el-form-item label="真实姓名" prop="realName">
+          <el-input v-model="registerForm.realName" placeholder="请输入真实姓名" />
+        </el-form-item>
+        <el-form-item label="联系电话" prop="phone">
+          <el-input v-model="registerForm.phone" placeholder="请输入联系电话" />
+        </el-form-item>
+        <el-form-item label="用户类型" prop="roleCode">
+          <el-select v-model="registerForm.roleCode" placeholder="请选择申请角色" style="width: 100%">
+            <el-option label="牧场主" value="owner" />
+            <el-option label="兽医" value="vet" />
+            <el-option label="饲养员" value="feeder" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="registerDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="registerLoading" @click="handleRegister">提交申请</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -27,16 +58,51 @@ import request from '@/api/request'
 const router = useRouter()
 const userStore = useUserStore()
 const loginFormRef = ref()
+const registerFormRef = ref()
 const loading = ref(false)
+const registerLoading = ref(false)
+const registerDialogVisible = ref(false)
 
 const loginForm = reactive({
   username: '',
   password: ''
 })
 
+const registerForm = reactive({
+  username: '',
+  password: '',
+  realName: '',
+  phone: '',
+  roleCode: ''
+})
+
 const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+}
+
+const registerRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+  realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
+  phone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  roleCode: [{ required: true, message: '请选择用户类型', trigger: 'change' }]
+}
+
+const resetRegisterForm = () => {
+  Object.assign(registerForm, {
+    username: '',
+    password: '',
+    realName: '',
+    phone: '',
+    roleCode: ''
+  })
+  registerFormRef.value?.resetFields()
+}
+
+const openRegisterDialog = () => {
+  resetRegisterForm()
+  registerDialogVisible.value = true
 }
 
 const handleLogin = () => {
@@ -57,6 +123,23 @@ const handleLogin = () => {
       } finally {
         loading.value = false
       }
+    }
+  })
+}
+
+const handleRegister = () => {
+  registerFormRef.value?.validate(async (valid: boolean) => {
+    if (!valid) {
+      return
+    }
+    registerLoading.value = true
+    try {
+      await request.post('/auth/register', registerForm)
+      ElMessage.success('注册申请已提交，请等待牧场主或管理员审核')
+      registerDialogVisible.value = false
+      resetRegisterForm()
+    } finally {
+      registerLoading.value = false
     }
   })
 }

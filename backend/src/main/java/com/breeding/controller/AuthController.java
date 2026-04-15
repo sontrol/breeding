@@ -3,12 +3,16 @@ package com.breeding.controller;
 import com.breeding.common.JwtUtils;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
+import com.breeding.dto.auth.RegisterDTO;
+import com.breeding.service.RegisterService;
+import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -24,6 +28,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private RegisterService registerService;
 
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody LoginDTO loginDTO) {
@@ -52,8 +59,19 @@ public class AuthController {
             return Result.success(data);
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.error("登录失败: 用户名或密码错误");
+            String message = e.getMessage();
+            if (message == null || message.isBlank()) {
+                message = "用户名或密码错误";
+            }
+            return Result.error("登录失败: " + message);
         }
+    }
+
+    @PostMapping("/register")
+    @PreAuthorize("permitAll()")
+    public Result<Void> register(@Valid @RequestBody RegisterDTO registerDTO) {
+        registerService.submit(registerDTO);
+        return Result.success();
     }
 
     @PostMapping("/logout")

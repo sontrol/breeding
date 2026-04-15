@@ -134,6 +134,20 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         meta: { title: '用户管理', icon: 'User' }
       }
     ]
+  },
+  {
+    path: '/register-audit',
+    name: 'RegisterAudit',
+    component: () => import('../layout/Layout.vue'),
+    meta: { title: '注册审核', permission: 'system:register:view' },
+    children: [
+      {
+        path: 'list',
+        name: 'RegisterAuditList',
+        component: () => import('../views/system/RegisterAuditList.vue'),
+        meta: { title: '注册审核', icon: 'Finished' }
+      }
+    ]
   }
 ]
 

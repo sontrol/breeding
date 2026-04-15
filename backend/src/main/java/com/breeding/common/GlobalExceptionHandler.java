@@ -1,6 +1,7 @@
 package com.breeding.common;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -30,6 +31,19 @@ public class GlobalExceptionHandler {
             return Result.error("提交的数据已存在，请检查唯一性字段（如用户名、耳标号、批次号等）");
         }
         return Result.error("数据库操作约束异常: " + msg);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Result<String> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldError() != null
+                ? e.getBindingResult().getFieldError().getDefaultMessage()
+                : "请求参数校验失败";
+        return Result.error(message);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Result<String> handleIllegalArgumentException(IllegalArgumentException e) {
+        return Result.error(e.getMessage());
     }
 
     /**
