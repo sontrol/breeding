@@ -97,7 +97,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     path: '/ai',
     name: 'AI',
     component: () => import('../layout/Layout.vue'),
-    meta: { title: 'AI 助手' },
+    meta: { title: 'AI 助手', permission: 'ai:view' },
     children: [
       {
         path: 'chat',

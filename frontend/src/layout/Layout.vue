@@ -55,7 +55,7 @@
             <span>库存列表</span>
           </el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/ai" v-if="canAccessAI()">
+        <el-sub-menu index="/ai" v-if="hasPerm('ai:view')">
           <template #title>
             <el-icon><Monitor /></el-icon>
             <span>AI 助手</span>
@@ -118,10 +118,6 @@ const activeMenu = computed(() => route.path)
 
 const hasPerm = (perm: string) => {
   return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
-
-const canAccessAI = () => {
-  return !!userStore.token
 }
 
 const handleLogout = () => {
