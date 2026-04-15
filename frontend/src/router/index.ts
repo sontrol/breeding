@@ -94,16 +94,16 @@ export const dynamicRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: '/ai',
+    path: '/ai/chat',
     name: 'AI',
     component: () => import('../layout/Layout.vue'),
     meta: { title: 'AI 助手', permission: 'ai:view' },
     children: [
       {
-        path: 'chat',
+        path: '',
         name: 'AIChat',
         component: () => import('../views/ai/AIChat.vue'),
-        meta: { title: '智能分析', icon: 'Monitor' }
+        meta: { title: 'AI 助手', icon: 'Monitor' }
       }
     ]
   },
