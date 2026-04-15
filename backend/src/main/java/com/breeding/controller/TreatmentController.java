@@ -67,28 +67,24 @@ public class TreatmentController {
         treatment.setTreatmentTime(dto.getTreatmentTime());
         treatment.setResult(dto.getResult());
 
-        try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            
-            if (dto.getItems() != null && !dto.getItems().isEmpty()) {
-                for (TreatmentItem item : dto.getItems()) {
-                    inventoryService.deductInventory(
-                        item.getInventoryId(),
-                        item.getDosage(),
-                        loginUser.getUser().getId(),
-                        "治疗消耗 - " + item.getItemName() + " - 动物ID:" + dto.getAnimalId()
-                    );
-                }
-            } else if (dto.getMedicineId() != null) {
+        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+            for (TreatmentItem item : dto.getItems()) {
                 inventoryService.deductInventory(
-                    dto.getMedicineId(),
-                    dto.getDosage(),
+                    item.getInventoryId(),
+                    item.getDosage(),
                     loginUser.getUser().getId(),
-                    "治疗用药消耗 - 动物ID:" + dto.getAnimalId()
+                    "治疗消耗 - " + item.getItemName() + " - 动物ID:" + dto.getAnimalId()
                 );
             }
-        } catch (Exception e) {
-            return Result.error("库存扣减失败: " + e.getMessage());
+        } else if (dto.getMedicineId() != null) {
+            inventoryService.deductInventory(
+                dto.getMedicineId(),
+                dto.getDosage(),
+                loginUser.getUser().getId(),
+                "治疗用药消耗 - 动物ID:" + dto.getAnimalId()
+            );
         }
         
         boolean saved = treatmentService.save(treatment);

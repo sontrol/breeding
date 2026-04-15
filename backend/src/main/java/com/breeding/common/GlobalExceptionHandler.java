@@ -46,6 +46,11 @@ public class GlobalExceptionHandler {
         return Result.error(e.getMessage());
     }
 
+    @ExceptionHandler(BusinessException.class)
+    public Result<String> handleBusinessException(BusinessException e) {
+        return Result.error(e.getMessage());
+    }
+
     /**
      * 处理其他未捕获的运行时异常
      */

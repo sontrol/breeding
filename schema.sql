@@ -471,3 +471,56 @@ INSERT INTO alert (id, rule_type, target_id, alert_msg, status, create_time, cre
 (1, 'medicine_expire', 2, '氟苯尼考注射液库存请在到期前完成使用计划核查', 0, DATE_SUB(NOW(), INTERVAL 6 HOUR), NULL, NULL, NULL),
 (2, 'temperature_anomaly', 4, '耳标 EAR2026004 体温异常，请兽医复检', 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 3, DATE_SUB(NOW(), INTERVAL 12 HOUR), 3),
 (3, 'no_food_long', 2, '耳标 EAR2026002 近 6 小时采食异常偏低', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), 4, NULL, NULL);
+
+-- ==========================================================
+-- 12. 外键约束定义
+-- ==========================================================
+
+-- 用户与权限模块 (RBAC) 外键
+ALTER TABLE user_role ADD CONSTRAINT fk_user_role_user FOREIGN KEY (user_id) REFERENCES user(id);
+ALTER TABLE user_role ADD CONSTRAINT fk_user_role_role FOREIGN KEY (role_id) REFERENCES role(id);
+ALTER TABLE role_permission ADD CONSTRAINT fk_role_permission_role FOREIGN KEY (role_id) REFERENCES role(id);
+ALTER TABLE role_permission ADD CONSTRAINT fk_role_permission_permission FOREIGN KEY (permission_id) REFERENCES permission(id);
+
+-- 动物管理模块 外键
+ALTER TABLE shed ADD CONSTRAINT fk_shed_manager FOREIGN KEY (manager_id) REFERENCES user(id);
+ALTER TABLE animal ADD CONSTRAINT fk_animal_shed FOREIGN KEY (shed_id) REFERENCES shed(id);
+ALTER TABLE animal_status_log ADD CONSTRAINT fk_animal_status_log_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE animal_status_log ADD CONSTRAINT fk_animal_status_log_operator FOREIGN KEY (operator_id) REFERENCES user(id);
+
+-- 事件中心 外键
+ALTER TABLE event ADD CONSTRAINT fk_event_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE event ADD CONSTRAINT fk_event_operator FOREIGN KEY (operator_id) REFERENCES user(id);
+
+-- 饲养管理模块 外键
+ALTER TABLE feeding_plan ADD CONSTRAINT fk_feeding_plan_shed FOREIGN KEY (shed_id) REFERENCES shed(id);
+ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_plan FOREIGN KEY (plan_id) REFERENCES feeding_plan(id);
+ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_shed FOREIGN KEY (shed_id) REFERENCES shed(id);
+ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_operator FOREIGN KEY (operator_id) REFERENCES user(id);
+
+-- 疾病与治疗管理（三层架构）外键
+ALTER TABLE symptom ADD CONSTRAINT fk_symptom_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE symptom ADD CONSTRAINT fk_symptom_observer FOREIGN KEY (observer_id) REFERENCES user(id);
+ALTER TABLE diagnosis ADD CONSTRAINT fk_diagnosis_symptom FOREIGN KEY (symptom_id) REFERENCES symptom(id);
+ALTER TABLE diagnosis ADD CONSTRAINT fk_diagnosis_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE diagnosis ADD CONSTRAINT fk_diagnosis_vet FOREIGN KEY (vet_id) REFERENCES user(id);
+ALTER TABLE treatment ADD CONSTRAINT fk_treatment_diagnosis FOREIGN KEY (diagnosis_id) REFERENCES diagnosis(id);
+ALTER TABLE treatment ADD CONSTRAINT fk_treatment_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE treatment ADD CONSTRAINT fk_treatment_vet FOREIGN KEY (vet_id) REFERENCES user(id);
+ALTER TABLE treatment ADD CONSTRAINT fk_treatment_medicine FOREIGN KEY (medicine_id) REFERENCES inventory(id);
+
+-- 疫苗管理模块 外键
+ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_vaccine FOREIGN KEY (vaccine_id) REFERENCES vaccine(id);
+ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_vet FOREIGN KEY (vet_id) REFERENCES user(id);
+
+-- 库存管理模块 外键
+ALTER TABLE inventory_log ADD CONSTRAINT fk_inventory_log_inventory FOREIGN KEY (inventory_id) REFERENCES inventory(id);
+ALTER TABLE inventory_log ADD CONSTRAINT fk_inventory_log_operator FOREIGN KEY (operator_id) REFERENCES user(id);
+
+-- 预警与系统日志 外键
+ALTER TABLE alert ADD CONSTRAINT fk_alert_creator FOREIGN KEY (creator_id) REFERENCES user(id);
+ALTER TABLE alert ADD CONSTRAINT fk_alert_handler FOREIGN KEY (handler_id) REFERENCES user(id);
+ALTER TABLE invalid_record ADD CONSTRAINT fk_invalid_record_deleter FOREIGN KEY (deleted_by) REFERENCES user(id);
+ALTER TABLE operation_log ADD CONSTRAINT fk_operation_log_user FOREIGN KEY (user_id) REFERENCES user(id);
+ALTER TABLE audit_log ADD CONSTRAINT fk_audit_log_user FOREIGN KEY (user_id) REFERENCES user(id);

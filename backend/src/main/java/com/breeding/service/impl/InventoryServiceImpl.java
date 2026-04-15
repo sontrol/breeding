@@ -3,6 +3,7 @@ package com.breeding.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.breeding.common.BusinessException;
 import com.breeding.entity.Inventory;
 import com.breeding.entity.InventoryLog;
 import com.breeding.mapper.InventoryLogMapper;
@@ -40,10 +41,10 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
     public boolean deductInventory(Long inventoryId, BigDecimal quantity, Long operatorId, String remark) {
         Inventory inventory = this.getById(inventoryId);
         if (inventory == null) {
-            throw new RuntimeException("库存记录不存在");
+            throw new BusinessException("库存记录不存在");
         }
         if (inventory.getQuantity().compareTo(quantity) < 0) {
-            throw new RuntimeException("库存不足，当前库存: " + inventory.getQuantity() + inventory.getUnit());
+            throw new BusinessException("库存不足，当前库存: " + inventory.getQuantity() + inventory.getUnit());
         }
         
         inventory.setQuantity(inventory.getQuantity().subtract(quantity));
@@ -71,7 +72,7 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
         Inventory inventory = this.getOne(wrapper);
         
         if (inventory == null) {
-            throw new RuntimeException("未找到 [" + itemName + "] 的库存记录");
+            throw new BusinessException("未找到 [" + itemName + "] 的库存记录");
         }
         
         return deductInventory(inventory.getId(), quantity, operatorId, remark);
