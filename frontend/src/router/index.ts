@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { jwtDecode } from 'jwt-decode'
 
 const staticRoutes: RouteRecordRaw[] = [
   {
@@ -146,7 +147,16 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   const token = localStorage.getItem('token')
   const hasValidAuthState = () => {
-    return !!token
+    if (!token) return false
+    try {
+      const decoded = jwtDecode<{ exp: number }>(token)
+      if (decoded.exp * 1000 < Date.now()) {
+        return false
+      }
+      return true
+    } catch (e) {
+      return false
+    }
   }
   const resetInvalidAuth = (redirect = true) => {
     userStore.logout()
