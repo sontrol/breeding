@@ -35,4 +35,4 @@ jwt:
 deepseek:
   api-key: sk-2ce035ff944f4b1eaa567eed08742443
   api-url: https://api.deepseek.com/v1/chat/completions
-  model: deepseek-chat
+  model: deepseek-v4-flash
