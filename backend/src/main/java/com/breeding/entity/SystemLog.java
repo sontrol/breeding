@@ -9,16 +9,20 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("invalid_record")
-public class InvalidRecord {
+@TableName("system_log")
+public class SystemLog {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private Long dataId;
-    private String dataType;
-    private String moduleName;
-    private String displayName;
-    private Long deletedBy;
-    private String deletedByName;
+    private Integer logType;
+    private Long userId;
+    private String module;
+    private String action;
+    private String method;
+    private String params;
+    private String ip;
+    private String queryContent;
+    private String accessedModules;
+    private String responseContent;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-    private LocalDateTime deletedTime;
+    private LocalDateTime createTime;
 }

@@ -13,11 +13,11 @@ public class TreatmentAddDTO {
     private Long diagnosisId;
     private Long animalId;
     private Long vetId;
-    private Long medicineId; // 兼容旧数据
-    private BigDecimal dosage; // 兼容旧数据
+    private Long medicineId;
+    private BigDecimal dosage;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime treatmentTime;
     private String result;
-    private List<TreatmentItem> items; // 治疗明细
-    private Integer diagnosisStatus; // 诊断状态更新: 0-继续治疗, 1-已治愈, 2-死亡
+    private List<TreatmentItem> items;
+    private Integer diagnosisStatus;
 }

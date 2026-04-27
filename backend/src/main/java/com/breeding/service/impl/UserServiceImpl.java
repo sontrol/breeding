@@ -38,7 +38,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (roleId == null) {
                 return new Page<>(pageNum, pageSize, 0);
             }
-            wrapper.inSql(User::getId, "SELECT user_id FROM user_role WHERE role_id = " + roleId);
+            wrapper.eq(User::getRoleId, roleId);
         }
         
         wrapper.orderByDesc(User::getId);
@@ -52,25 +52,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean saveUserWithRole(User user) {
         if (user.getId() == null) {
             prepareNewUser(user);
-            if (!this.save(user)) {
-                return false;
-            }
-            bindUserRole(user.getId(), user.getRoleCode());
-            return true;
+            Long roleId = resolveRoleId(user.getRoleCode());
+            user.setRoleId(roleId);
+            return this.save(user);
         }
         validateUpdatableRole(user);
-        if (!this.updateById(user)) {
-            return false;
-        }
-        syncUserRole(user);
-        return true;
+        Long roleId = resolveRoleId(user.getRoleCode());
+        user.setRoleId(roleId);
+        return this.updateById(user);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteUserPermanently(Long userId) {
-        this.baseMapper.deleteUserRoles(userId);
-        jdbcTemplate.update("DELETE FROM invalid_record WHERE data_type = 'user' AND data_id = ?", userId);
+        jdbcTemplate.update("DELETE FROM user_role WHERE user_id = ?", userId);
         return jdbcTemplate.update("DELETE FROM user WHERE id = ?", userId) > 0;
     }
 
@@ -95,11 +90,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
-    private void syncUserRole(User user) {
-        if (user.getRoleCode() == null || user.getRoleCode().isBlank()) {
-            return;
+    private Long resolveRoleId(String roleCode) {
+        if (roleCode == null || roleCode.isBlank()) {
+            return null;
         }
-        bindUserRole(user.getId(), user.getRoleCode());
+        Long roleId = this.baseMapper.selectRoleIdByCode(roleCode);
+        if (roleId == null) {
+            throw new IllegalArgumentException("用户类型不存在");
+        }
+        return roleId;
     }
 
     private void validateUpdatableRole(User user) {
@@ -117,14 +116,5 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!UserRoleConstants.isAssignableRole(roleCode)) {
             throw new IllegalArgumentException("该用户类型不允许通过用户管理直接分配");
         }
-    }
-
-    private void bindUserRole(Long userId, String roleCode) {
-        Long roleId = this.baseMapper.selectRoleIdByCode(roleCode);
-        if (roleId == null) {
-            throw new IllegalArgumentException("用户类型不存在");
-        }
-        this.baseMapper.deleteUserRoles(userId);
-        this.baseMapper.insertUserRole(userId, roleId);
     }
 }

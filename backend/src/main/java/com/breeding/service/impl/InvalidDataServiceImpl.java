@@ -1,11 +1,7 @@
 package com.breeding.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.breeding.entity.InvalidRecord;
-import com.breeding.mapper.InvalidRecordMapper;
 import com.breeding.service.InvalidDataService;
+import com.breeding.service.SystemLogService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,36 +14,20 @@ import java.util.Map;
 import java.util.Set;
 
 @Service
-public class InvalidDataServiceImpl extends ServiceImpl<InvalidRecordMapper, InvalidRecord> implements InvalidDataService {
+public class InvalidDataServiceImpl implements InvalidDataService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final SystemLogService systemLogService;
 
-    public InvalidDataServiceImpl(JdbcTemplate jdbcTemplate) {
+    public InvalidDataServiceImpl(JdbcTemplate jdbcTemplate, SystemLogService systemLogService) {
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    @Override
-    public Page<InvalidRecord> getInvalidPage(int pageNum, int pageSize, String dataType) {
-        Page<InvalidRecord> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<InvalidRecord> wrapper = new LambdaQueryWrapper<>();
-        wrapper.ne(InvalidRecord::getDataType, "user");
-        if (dataType != null && !dataType.isBlank()) {
-            wrapper.eq(InvalidRecord::getDataType, dataType);
-        }
-        wrapper.orderByDesc(InvalidRecord::getDeletedTime);
-        return this.page(page, wrapper);
+        this.systemLogService = systemLogService;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean invalidate(String dataType, Long dataId, Long operatorId, String operatorName) {
         ArchiveMeta meta = getArchiveMeta(dataType);
-        InvalidRecord existedRecord = this.getOne(new LambdaQueryWrapper<InvalidRecord>()
-                .eq(InvalidRecord::getDataType, dataType)
-                .eq(InvalidRecord::getDataId, dataId));
-        if (existedRecord != null) {
-            throw new IllegalArgumentException("该数据已作废");
-        }
 
         Map<String, Object> sourceRow = fetchSourceRow(meta, dataId);
         if (sourceRow == null) {
@@ -57,43 +37,50 @@ public class InvalidDataServiceImpl extends ServiceImpl<InvalidRecordMapper, Inv
             throw new IllegalArgumentException("该数据已作废");
         }
 
+        String displayName = sourceRow.get("display_name") != null ? String.valueOf(sourceRow.get("display_name")) : "";
+
         int updated = jdbcTemplate.update(
-                "UPDATE " + meta.tableName + " SET deleted = 1, delete_by = ?, delete_time = NOW() WHERE id = ? AND deleted = 0",
-                operatorId, dataId
+                "UPDATE " + meta.tableName + " SET deleted = 1, delete_by = ?, delete_time = ? WHERE id = ? AND deleted = 0",
+                operatorId, LocalDateTime.now(), dataId
         );
         if (updated == 0) {
             throw new IllegalStateException("作废失败，请刷新后重试");
         }
 
-        InvalidRecord invalidRecord = new InvalidRecord();
-        invalidRecord.setDataId(dataId);
-        invalidRecord.setDataType(dataType);
-        invalidRecord.setModuleName(meta.moduleName);
-        invalidRecord.setDisplayName(String.valueOf(sourceRow.get("display_name")));
-        invalidRecord.setDeletedBy(operatorId);
-        invalidRecord.setDeletedByName(operatorName);
-        invalidRecord.setDeletedTime(LocalDateTime.now());
-        return this.save(invalidRecord);
+        systemLogService.logOperation(
+                operatorId,
+                meta.moduleName,
+                "作废",
+                "InvalidDataService.invalidate",
+                "数据类型: " + dataType + ", 数据ID: " + dataId + ", 数据标题: " + displayName,
+                null
+        );
+
+        return true;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean restore(Long invalidRecordId) {
-        InvalidRecord invalidRecord = this.getById(invalidRecordId);
-        if (invalidRecord == null) {
-            throw new IllegalArgumentException("作废记录不存在");
-        }
-
-        ArchiveMeta meta = getArchiveMeta(invalidRecord.getDataType());
+    public boolean restore(String dataType, Long dataId, Long operatorId) {
+        ArchiveMeta meta = getArchiveMeta(dataType);
         int updated = jdbcTemplate.update(
                 "UPDATE " + meta.tableName + " SET deleted = 0, delete_by = NULL, delete_time = NULL WHERE id = ? AND deleted = 1",
-                invalidRecord.getDataId()
+                dataId
         );
         if (updated == 0) {
             throw new IllegalStateException("恢复失败，原始数据可能已不存在");
         }
 
-        return this.removeById(invalidRecordId);
+        systemLogService.logOperation(
+                operatorId,
+                meta.moduleName,
+                "恢复",
+                "InvalidDataService.restore",
+                "数据类型: " + dataType + ", 数据ID: " + dataId,
+                null
+        );
+
+        return true;
     }
 
     private Map<String, Object> fetchSourceRow(ArchiveMeta meta, Long dataId) {

@@ -71,11 +71,9 @@ public class RegisterAuditServiceImpl implements RegisterAuditService {
             throw new IllegalArgumentException("申请角色不存在，无法完成审核");
         }
 
-        userMapper.deleteUserRoles(user.getId());
-        userMapper.insertUserRole(user.getId(), roleId);
-
         User updateUser = new User();
         updateUser.setId(user.getId());
+        updateUser.setRoleId(roleId);
         updateUser.setAuditStatus(1);
         updateUser.setAuditRemark(auditDTO.getAuditRemark());
         updateUser.setAuditBy(auditorId);
@@ -95,7 +93,7 @@ public class RegisterAuditServiceImpl implements RegisterAuditService {
         updateUser.setAuditRemark(auditDTO.getAuditRemark());
         updateUser.setAuditBy(auditorId);
         updateUser.setAuditTime(LocalDateTime.now());
-        userMapper.deleteUserRoles(user.getId());
+        updateUser.setRoleId(null);
         userMapper.updateById(updateUser);
     }
 

@@ -14,12 +14,12 @@ public class TreatmentVO {
     private Long diagnosisId;
     private Long animalId;
     private Long vetId;
-    private Long medicineId; // 兼容旧数据
-    private BigDecimal dosage; // 兼容旧数据
+    private Long medicineId;
+    private BigDecimal dosage;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime treatmentTime;
     private String result;
-    private List<TreatmentItem> items; // 治疗明细
+    private List<TreatmentItem> items;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
 }

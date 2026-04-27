@@ -41,7 +41,7 @@ public class RegisterServiceImpl implements RegisterService {
                 exists.setAuditRemark(null);
                 exists.setAuditBy(null);
                 exists.setAuditTime(null);
-                userMapper.deleteUserRoles(exists.getId());
+                exists.setRoleId(null);
                 userMapper.updateById(exists);
                 return;
             }

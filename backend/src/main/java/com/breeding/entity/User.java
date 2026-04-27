@@ -20,6 +20,7 @@ public class User {
     private String realName;
     private String phone;
     private Integer status;
+    private Long roleId;
     private String applyRoleCode;
     private Integer auditStatus;
     private String auditRemark;

@@ -13,16 +13,17 @@
         </el-form-item>
       </el-form>
 
+      <el-alert
+        title="提示：作废记录功能已调整，现通过各业务模块的软删除标记(deleted=1)来识别作废数据。如需恢复数据，请直接在对应模块操作或联系管理员。"
+        type="info"
+        :closable="false"
+        style="margin-bottom: 15px;"
+      />
+
       <el-table v-loading="loading" :data="recordList" border>
-        <el-table-column prop="id" label="记录ID" width="90" align="center" />
+        <el-table-column prop="id" label="数据ID" width="90" align="center" />
         <el-table-column prop="moduleName" label="原页面" width="140" align="center" />
         <el-table-column prop="displayName" label="作废数据" min-width="280" show-overflow-tooltip />
-        <el-table-column prop="deletedByName" label="作废人" width="140" align="center">
-          <template #default="scope">
-            {{ scope.row.deletedByName || `用户#${scope.row.deletedBy}` }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="deletedTime" label="作废时间" min-width="180" align="center" />
         <el-table-column label="操作" width="120" align="center">
           <template #default="scope">
             <el-button size="small" type="success" link icon="RefreshLeft" @click="handleRestore(scope.row)" v-if="hasPerm('system:invalid:restore')">恢复</el-button>
@@ -57,9 +58,6 @@ interface InvalidRecord {
   dataType: string
   moduleName: string
   displayName: string
-  deletedBy: number
-  deletedByName?: string
-  deletedTime: string
 }
 
 const userStore = useUserStore()
@@ -91,11 +89,36 @@ const hasPerm = (perm: string) => {
 const getList = async () => {
   loading.value = true
   try {
-    const res: any = await request.get('/invalid-data/page', { params: queryParams })
-    if (res.code === 200) {
-      recordList.value = res.data.records
-      total.value = res.data.total
+    const records: InvalidRecord[] = []
+    const type = queryParams.dataType
+    const typesToQuery = type ? [type] : typeOptions.map(o => o.value)
+
+    for (const dt of typesToQuery) {
+      const meta = typeOptions.find(o => o.value === dt)
+      if (!meta) continue
+      try {
+        const res: any = await request.get(`/${dt}/page`, { params: { page: 1, size: 1000 } })
+        if (res.code === 200 && res.data.records) {
+          const deletedItems = res.data.records
+            .filter((r: any) => r.deleted === 1)
+            .map((r: any) => ({
+              id: r.id,
+              dataId: r.id,
+              dataType: dt,
+              moduleName: meta.label,
+              displayName: r.displayName || `${meta.label} #${r.id}`
+            }))
+          records.push(...deletedItems)
+        }
+      } catch (e) {
+        console.warn(`获取 ${dt} 作废数据失败`, e)
+      }
     }
+
+    const start = (queryParams.page - 1) * queryParams.size
+    const end = start + queryParams.size
+    recordList.value = records.slice(start, end)
+    total.value = records.length
   } finally {
     loading.value = false
   }
@@ -122,12 +145,12 @@ const handleCurrentChange = (val: number) => {
 }
 
 const handleRestore = (row: InvalidRecord) => {
-  ElMessageBox.confirm(`是否确认恢复“${row.displayName}”？恢复后数据将重新回到原页面显示。`, '恢复确认', {
+  ElMessageBox.confirm(`是否确认恢复"${row.displayName}"？恢复后数据将重新回到原页面显示。`, '恢复确认', {
     confirmButtonText: '确定恢复',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
-    await request.put(`/invalid-data/restore/${row.id}`)
+    await request.put('/invalid-data/restore', null, { params: { dataType: row.dataType, dataId: row.dataId } })
     ElMessage.success('恢复成功')
     getList()
   }).catch(() => {})
