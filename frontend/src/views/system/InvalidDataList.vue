@@ -14,7 +14,7 @@
       </el-form>
 
       <el-alert
-        title="提示：作废记录功能已调整，现通过各业务模块的软删除标记(deleted=1)来识别作废数据。如需恢复数据，请直接在对应模块操作或联系管理员。"
+        title="提示：以下为各业务模块中标记为"已作废"（deleted=1）的数据。恢复后数据将重新在原页面显示。"
         type="info"
         :closable="false"
         style="margin-bottom: 15px;"
@@ -54,7 +54,6 @@ import { useUserStore } from '@/store/user'
 
 interface InvalidRecord {
   id: number
-  dataId: number
   dataType: string
   moduleName: string
   displayName: string
@@ -89,36 +88,11 @@ const hasPerm = (perm: string) => {
 const getList = async () => {
   loading.value = true
   try {
-    const records: InvalidRecord[] = []
-    const type = queryParams.dataType
-    const typesToQuery = type ? [type] : typeOptions.map(o => o.value)
-
-    for (const dt of typesToQuery) {
-      const meta = typeOptions.find(o => o.value === dt)
-      if (!meta) continue
-      try {
-        const res: any = await request.get(`/${dt}/page`, { params: { page: 1, size: 1000 } })
-        if (res.code === 200 && res.data.records) {
-          const deletedItems = res.data.records
-            .filter((r: any) => r.deleted === 1)
-            .map((r: any) => ({
-              id: r.id,
-              dataId: r.id,
-              dataType: dt,
-              moduleName: meta.label,
-              displayName: r.displayName || `${meta.label} #${r.id}`
-            }))
-          records.push(...deletedItems)
-        }
-      } catch (e) {
-        console.warn(`获取 ${dt} 作废数据失败`, e)
-      }
+    const res: any = await request.get('/invalid-data/page', { params: queryParams })
+    if (res.code === 200) {
+      recordList.value = res.data.records || []
+      total.value = res.data.total || 0
     }
-
-    const start = (queryParams.page - 1) * queryParams.size
-    const end = start + queryParams.size
-    recordList.value = records.slice(start, end)
-    total.value = records.length
   } finally {
     loading.value = false
   }
@@ -150,7 +124,7 @@ const handleRestore = (row: InvalidRecord) => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
-    await request.put('/invalid-data/restore', null, { params: { dataType: row.dataType, dataId: row.dataId } })
+    await request.put('/invalid-data/restore', null, { params: { dataType: row.dataType, dataId: row.id } })
     ElMessage.success('恢复成功')
     getList()
   }).catch(() => {})

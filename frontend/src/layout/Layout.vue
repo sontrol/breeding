@@ -33,15 +33,15 @@
               <el-icon><Warning /></el-icon>
               <span>疾病管理</span>
             </template>
-            <el-menu-item index="/disease/symptom" v-if="hasPerm('symptom:view')">
+            <el-menu-item index="/disease/symptom" v-if="hasPerm('disease:view')">
               <el-icon><WarningFilled /></el-icon>
               <span>症状上报</span>
             </el-menu-item>
-            <el-menu-item index="/disease/diagnosis" v-if="hasPerm('diagnosis:view')">
+            <el-menu-item index="/disease/diagnosis" v-if="hasPerm('disease:view')">
               <el-icon><List /></el-icon>
               <span>诊断记录</span>
             </el-menu-item>
-            <el-menu-item index="/disease/treatment" v-if="hasPerm('treatment:view')">
+            <el-menu-item index="/disease/treatment" v-if="hasPerm('disease:view')">
               <el-icon><Clock /></el-icon>
               <span>治疗记录</span>
             </el-menu-item>

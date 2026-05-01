@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -81,6 +83,33 @@ public class InvalidDataServiceImpl implements InvalidDataService {
         );
 
         return true;
+    }
+
+    @Override
+    public List<Map<String, Object>> getInvalidDataList(String dataType, int page, int size) {
+        ArchiveMeta meta = getArchiveMeta(dataType);
+        int offset = (page - 1) * size;
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT id, " + meta.displaySql + " AS display_name FROM " + meta.tableName
+                        + " WHERE deleted = 1 ORDER BY delete_time DESC LIMIT ? OFFSET ?", size, offset);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", row.get("id"));
+            item.put("dataType", dataType);
+            item.put("moduleName", meta.moduleName);
+            item.put("displayName", row.get("display_name") != null ? String.valueOf(row.get("display_name")) : (meta.moduleName + " #" + row.get("id")));
+            result.add(item);
+        }
+        return result;
+    }
+
+    @Override
+    public long countInvalidData(String dataType) {
+        ArchiveMeta meta = getArchiveMeta(dataType);
+        Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM " + meta.tableName + " WHERE deleted = 1", Long.class);
+        return count != null ? count : 0;
     }
 
     private Map<String, Object> fetchSourceRow(ArchiveMeta meta, Long dataId) {
