@@ -1,1 +1,0 @@
-const l=[{label:"管理员",value:"admin"},{label:"牧场主",value:"owner"},{label:"兽医",value:"vet"},{label:"饲养员",value:"feeder"}],r=l.filter(e=>e.value!=="admin"),t=l.filter(e=>e.value==="vet"||e.value==="feeder"),n=e=>{var a;return((a=l.find(s=>s.value===e))==null?void 0:a.label)||"未设置"};export{r as a,n as g,t as r,l as u};
