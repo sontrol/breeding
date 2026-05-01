@@ -9,12 +9,12 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
-          <el-button @click="resetQuery" icon="Refresh">重置</el-button>
+          <el-button @click="resetQuery('dataType')" icon="Refresh">重置</el-button>
         </el-form-item>
       </el-form>
 
       <el-alert
-        title="提示：以下为各业务模块中标记为"已作废"（deleted=1）的数据。恢复后数据将重新在原页面显示。"
+        title="提示：以下为各业务模块中标记为'已作废'（deleted=1）的数据。恢复后数据将重新在原页面显示。"
         type="info"
         :closable="false"
         style="margin-bottom: 15px;"
@@ -26,7 +26,7 @@
         <el-table-column prop="displayName" label="作废数据" min-width="280" show-overflow-tooltip />
         <el-table-column label="操作" width="120" align="center">
           <template #default="scope">
-            <el-button size="small" type="success" link icon="RefreshLeft" @click="handleRestore(scope.row)" v-if="hasPerm('system:invalid:restore')">恢复</el-button>
+            <el-button size="small" type="success" link icon="RefreshLeft" @click="executeRestore(scope.row)" v-if="hasPerm('system:invalid:restore')">恢复</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -47,10 +47,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive } from 'vue'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useConfirmAction } from '@/composables/useConfirmAction'
 
 interface InvalidRecord {
   id: number
@@ -58,11 +59,6 @@ interface InvalidRecord {
   moduleName: string
   displayName: string
 }
-
-const userStore = useUserStore()
-const loading = ref(true)
-const recordList = ref<InvalidRecord[]>([])
-const total = ref(0)
 
 const typeOptions = [
   { label: '动物档案', value: 'animal' },
@@ -81,57 +77,17 @@ const queryParams = reactive({
   dataType: undefined as string | undefined
 })
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/invalid-data/page', { params: queryParams })
-    if (res.code === 200) {
-      recordList.value = res.data.records || []
-      total.value = res.data.total || 0
-    }
-  } finally {
-    loading.value = false
-  }
-}
+const { loading, list: recordList, total, getList, resetQuery, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<InvalidRecord>('/invalid-data/page', queryParams, { autoFetch: true })
 
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const resetQuery = () => {
-  queryParams.dataType = undefined
-  handleQuery()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
-
-const handleRestore = (row: InvalidRecord) => {
-  ElMessageBox.confirm(`是否确认恢复"${row.displayName}"？恢复后数据将重新回到原页面显示。`, '恢复确认', {
-    confirmButtonText: '确定恢复',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.put('/invalid-data/restore', null, { params: { dataType: row.dataType, dataId: row.id } })
-    ElMessage.success('恢复成功')
-    getList()
-  }).catch(() => {})
-}
-
-onMounted(() => {
-  getList()
+const { execute: executeRestore } = useConfirmAction({
+  message: (row: InvalidRecord) => `是否确认恢复"${row.displayName}"？恢复后数据将重新回到原页面显示。`,
+  title: '恢复确认',
+  confirmText: '确定恢复',
+  action: (row: InvalidRecord) => request.put('/invalid-data/restore', null, { params: { dataType: row.dataType, dataId: row.id } }),
+  successMessage: '恢复成功',
+  onSuccess: getList
 })
 </script>
 
@@ -140,9 +96,4 @@ onMounted(() => {
   padding: 20px;
 }
 
-.pagination-wrapper {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
 </style>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { jwtDecode } from 'jwt-decode'
+import { hasPermission } from '@/composables/usePermission'
 
 const staticRoutes: RouteRecordRaw[] = [
   {
@@ -182,17 +183,11 @@ router.beforeEach((to, from, next) => {
     userStore.logout()
     return redirect ? next('/login') : next()
   }
-  const hasPerm = (perm?: string) => {
-    if (!perm) {
-      return true
-    }
-    return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-  }
   const firstAllowedPath = () => {
-    if (hasPerm('dashboard:view')) {
+    if (hasPermission('dashboard:view')) {
       return '/dashboard'
     }
-    const firstRoute = dynamicRoutes.find(route => hasPerm(route.meta?.permission as string | undefined))
+    const firstRoute = dynamicRoutes.find(route => hasPermission(route.meta?.permission as string | undefined))
     if (!firstRoute) {
       return '/login'
     }
@@ -239,7 +234,7 @@ router.beforeEach((to, from, next) => {
     return next({ ...to, replace: true })
   }
 
-  if (!hasPerm(to.meta?.permission as string | undefined)) {
+  if (!hasPermission(to.meta?.permission as string | undefined)) {
     const targetPath = firstAllowedPath()
     if (targetPath === '/login') {
       return resetInvalidAuth()

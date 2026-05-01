@@ -1,4 +1,4 @@
-﻿﻿/* 基础样式重置与全局变量 */
+﻿/* 基础样式重置与全局变量 */
 :root {
   --el-color-primary: #409eff;
   --bg-color: #f0f2f5;
@@ -62,4 +62,10 @@ html, body {
 
 .el-table th.el-table__cell {
   font-weight: 600;
+}
+
+.pagination-wrapper {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }

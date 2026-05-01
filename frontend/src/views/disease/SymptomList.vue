@@ -95,18 +95,19 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useCrudDialog } from '@/composables/useCrudDialog'
+import { useCurrentUserId } from '@/composables/useCurrentUser'
+import { useInvalidate } from '@/composables/useInvalidate'
 
-const userStore = useUserStore()
 const router = useRouter()
-const loading = ref(true)
-const symptomList = ref([])
-const total = ref(0)
+const currentUserId = useCurrentUserId()
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -123,7 +124,7 @@ const form = reactive({
   symptomDesc: '',
   observeTime: '',
   status: 0,
-  observerId: userStore.userInfo.userId
+  observerId: currentUserId
 })
 
 const rules = {
@@ -132,46 +133,14 @@ const rules = {
   observeTime: [{ required: true, message: '发现时间不能为空', trigger: 'blur' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format('YYYY/MM/DD HH:mm:ss')
-}
+const { loading, list: symptomList, total, getList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<any>('/symptom/page', queryParams, { autoFetch: true })
 
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/symptom/page', { params: queryParams })
-    if (res.code === 200) {
-      symptomList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
+const { reset: resetForm, submitForm: crudSubmit } = useCrudDialog('/symptom', getList, { addOnly: true, addSuccessMessage: '上报成功' })
 
 const reset = () => {
-  Object.assign(form, { animalId: undefined, symptomDesc: '', observeTime: '', status: 0, observerId: userStore.userInfo.userId })
-  formRef.value?.resetFields()
+  resetForm(form, formRef, { animalId: undefined, symptomDesc: '', observeTime: '', status: 0, observerId: currentUserId })
 }
 
 const handle新增 = () => {
@@ -186,14 +155,7 @@ const cancel = () => {
 }
 
 const submitForm = () => {
-  formRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      await request.post('/symptom', form)
-      ElMessage.success('上报成功')
-      open.value = false
-      getList()
-    }
-  })
+  crudSubmit(formRef, form)
 }
 
 const handleDiagnosis = (row: any) => {
@@ -206,21 +168,8 @@ const handleDiagnosis = (row: any) => {
   })
 }
 
-const handleInvalidate = (row: any) => {
-  ElMessageBox.confirm(`是否确认作废症状记录 #${row.id}？作废后仅可由管理员恢复。`, '作废确认', {
-    confirmButtonText: '确定作废',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.put(`/symptom/invalidate/${row.id}`)
-    ElMessage.success('作废成功')
-    getList()
-  }).catch(() => {})
-}
+const { handleInvalidate } = useInvalidate('/symptom', '症状', getList)
 
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style scoped>

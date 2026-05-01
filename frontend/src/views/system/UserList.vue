@@ -42,7 +42,7 @@
         <el-table-column label="操作" align="center" width="180">
           <template #default="scope">
             <el-button size="small" type="primary" link icon="Edit" @click="handleUpdate(scope.row)" v-if="hasPerm('system:user:edit')">修改</el-button>
-            <el-button size="small" type="danger" link icon="Delete" @click="handleDelete(scope.row)" v-if="hasPerm('system:user:delete') && scope.row.id !== userStore.userInfo.userId">删除</el-button>
+            <el-button size="small" type="danger" link icon="Delete" @click="executeDelete(scope.row)" v-if="hasPerm('system:user:delete') && scope.row.id !== userStore.userInfo.userId">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -100,12 +100,16 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { assignableUserRoleOptions, getUserRoleLabel, userRoleOptions } from '@/constants/user'
 import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useCrudDialog } from '@/composables/useCrudDialog'
+import { useConfirmAction } from '@/composables/useConfirmAction'
 
 interface UserRecord {
   id?: number
@@ -119,9 +123,6 @@ interface UserRecord {
 }
 
 const userStore = useUserStore()
-const loading = ref(true)
-const userList = ref<UserRecord[]>([])
-const total = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -166,42 +167,11 @@ const rules = {
   roleCode: [{ required: true, message: '请选择用户类型', trigger: 'change' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format('YYYY/MM/DD HH:mm:ss')
-}
+const { loading, list: userList, total, getList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<UserRecord>('/user/page', queryParams, { autoFetch: true })
 
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/user/page', { params: queryParams })
-    if (res.code === 200) {
-      userList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
+const { reset: resetForm, submitForm: crudSubmit } = useCrudDialog('/user', getList)
 
 const handleStatusChange = async (row: UserRecord) => {
   try {
@@ -213,8 +183,7 @@ const handleStatusChange = async (row: UserRecord) => {
 }
 
 const reset = () => {
-  Object.assign(form, { id: undefined, username: '', password: '', realName: '', phone: '', roleCode: '', status: 1 })
-  formRef.value?.resetFields()
+  resetForm(form, formRef, { id: undefined, username: '', password: '', realName: '', phone: '', roleCode: '', status: 1 })
 }
 
 const handle新增 = () => {
@@ -237,36 +206,18 @@ const cancel = () => {
 }
 
 const submitForm = () => {
-  formRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      if (form.id) {
-        await request.put('/user', form)
-        ElMessage.success('修改成功')
-      } else {
-        await request.post('/user', form)
-        ElMessage.success('新增成功')
-      }
-      open.value = false
-      getList()
-    }
-  })
+  crudSubmit(formRef, form)
 }
 
-const handleDelete = (row: UserRecord) => {
-  ElMessageBox.confirm(`是否确认删除用户"${row.username}"？删除后将无法恢复。`, '删除确认', {
-    confirmButtonText: '确定删除',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.delete(`/user/${row.id}`)
-    ElMessage.success('删除成功')
-    getList()
-  }).catch(() => {})
-}
-
-onMounted(() => {
-  getList()
+const { execute: executeDelete } = useConfirmAction({
+  message: (row: UserRecord) => `是否确认删除用户"${row.username}"？删除后将无法恢复。`,
+  title: '删除确认',
+  confirmText: '确定删除',
+  action: (row: UserRecord) => request.delete(`/user/${row.id}`),
+  successMessage: '删除成功',
+  onSuccess: getList
 })
+
 </script>
 
 <style scoped>

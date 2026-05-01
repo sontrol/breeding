@@ -111,6 +111,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { usePermission } from '@/composables/usePermission'
 
 const route = useRoute()
 const router = useRouter()
@@ -118,9 +119,7 @@ const userStore = useUserStore()
 
 const activeMenu = computed(() => route.path)
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
 const handleLogout = () => {
   userStore.logout()

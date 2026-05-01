@@ -33,7 +33,7 @@
         <el-table-column prop="applyRoleName" label="申请角色" align="center" />
         <el-table-column prop="auditStatus" label="审核状态" align="center" width="120">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.auditStatus)">{{ getStatusText(scope.row.auditStatus) }}</el-tag>
+            <el-tag :type="getEnumLabel(registerAuditStatusTypeMap, scope.row.auditStatus, 'info')">{{ getEnumLabel(registerAuditStatusMap, scope.row.auditStatus) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="auditRemark" label="审核备注" align="center" min-width="180" show-overflow-tooltip />
@@ -97,11 +97,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { registerRoleOptions } from '@/constants/user'
-import { useUserStore } from '@/store/user'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { getEnumLabel, registerAuditStatusMap, registerAuditStatusTypeMap } from '@/constants/enums'
 
 interface RegisterAuditRecord {
   id: number
@@ -118,10 +120,6 @@ interface RegisterAuditRecord {
   createTime: string
 }
 
-const userStore = useUserStore()
-const loading = ref(false)
-const recordList = ref<RegisterAuditRecord[]>([])
-const total = ref(0)
 const rejectDialogVisible = ref(false)
 const rejectFormRef = ref()
 const currentRejectUserId = ref<number>()
@@ -143,58 +141,9 @@ const rejectRules = {
   auditRemark: [{ required: true, message: '请输入驳回备注', trigger: 'blur' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const getList = async () => {
-  loading.value = true
-  try {
-    const params: Record<string, unknown> = {
-      page: queryParams.page,
-      size: queryParams.size
-    }
-    if (queryParams.username) params.username = queryParams.username
-    if (queryParams.realName) params.realName = queryParams.realName
-    if (queryParams.auditStatus !== undefined) params.auditStatus = queryParams.auditStatus
-    if (queryParams.applyRoleCode) params.applyRoleCode = queryParams.applyRoleCode
-
-    const res: any = await request.get('/register-audit/page', { params })
-    recordList.value = res.data.records
-    total.value = res.data.total
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
-
-const getStatusText = (status: number) => {
-  if (status === 0) return '待审核'
-  if (status === 1) return '已通过'
-  if (status === 2) return '已驳回'
-  return '未知'
-}
-
-const getStatusType = (status: number) => {
-  if (status === 0) return 'warning'
-  if (status === 1) return 'success'
-  if (status === 2) return 'danger'
-  return 'info'
-}
+const { loading, list: recordList, total, getList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<RegisterAuditRecord>('/register-audit/page', queryParams, { autoFetch: true })
 
 const handleApprove = async (row: RegisterAuditRecord) => {
   await ElMessageBox.confirm(`确认通过用户 "${row.username}" 的注册申请吗？`, '提示', {
@@ -231,9 +180,6 @@ const handleReject = () => {
   })
 }
 
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style scoped>
@@ -241,9 +187,4 @@ onMounted(() => {
   padding: 20px;
 }
 
-.pagination-wrapper {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
 </style>

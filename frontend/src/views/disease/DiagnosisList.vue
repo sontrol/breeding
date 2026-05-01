@@ -21,12 +21,12 @@
         <el-table-column prop="diseaseName" label="疾病名称" align="center" />
         <el-table-column prop="severity" label="严重程度" align="center">
           <template #default="scope">
-            <el-tag :type="getSeverityType(scope.row.severity)">{{ getSeverityLabel(scope.row.severity) }}</el-tag>
+            <el-tag :type="getEnumLabel(severityTypeMap, scope.row.severity, 'info')">{{ getEnumLabel(severityMap, scope.row.severity) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" align="center">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">{{ getStatusLabel(scope.row.status) }}</el-tag>
+            <el-tag :type="getEnumLabel(diagnosisStatusTypeMap, scope.row.status, 'info')">{{ getEnumLabel(diagnosisStatusMap, scope.row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="diagnoseTime" label="诊断时间" align="center">
@@ -113,19 +113,22 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { now } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useCrudDialog } from '@/composables/useCrudDialog'
+import { useInvalidate } from '@/composables/useInvalidate'
+import { useCurrentUserId } from '@/composables/useCurrentUser'
+import { getEnumLabel, severityMap, severityTypeMap, diagnosisStatusMap, diagnosisStatusTypeMap } from '@/constants/enums'
 
 const route = useRoute()
 const router = useRouter()
-const userStore = useUserStore()
-const loading = ref(true)
-const diagnosisList = ref<any[]>([])
-const total = ref(0)
+const currentUserId = useCurrentUserId()
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -140,10 +143,10 @@ const queryParams = reactive({
 const form = reactive({
   symptomId: route.query.symptomId ? Number(route.query.symptomId) : undefined,
   animalId: route.query.animalId ? Number(route.query.animalId) : undefined,
-  vetId: userStore.userInfo.userId,
+  vetId: currentUserId,
   diseaseName: '',
   severity: 1,
-  diagnoseTime: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+  diagnoseTime: now(),
   status: 0
 })
 
@@ -154,71 +157,20 @@ const rules = {
   diagnoseTime: [{ required: true, message: '诊断时间不能为空', trigger: 'blur' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format('YYYY/MM/DD HH:mm:ss')
-}
+const { loading, list: diagnosisList, total, getList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<any>('/diagnosis/page', queryParams, { autoFetch: true })
 
-const getSeverityLabel = (severity: number) => {
-  const map: Record<number, string> = { 1: '轻微', 2: '中度', 3: '严重' }
-  return map[severity] || '未知'
-}
-
-const getSeverityType = (severity: number) => {
-  const map: Record<number, string> = { 1: 'success', 2: 'warning', 3: 'danger' }
-  return map[severity] || 'info'
-}
-
-const getStatusLabel = (status: number) => {
-  const map: Record<number, string> = { 0: '治疗中', 1: '已治愈', 2: '死亡' }
-  return map[status] || '未知'
-}
-
-const getStatusType = (status: number) => {
-  const map: Record<number, string> = { 0: 'warning', 1: 'success', 2: 'danger' }
-  return map[status] || 'info'
-}
-
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/diagnosis/page', { params: queryParams })
-    if (res.code === 200) {
-      diagnosisList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
+const { submitForm: submitDiagnosisForm } = useCrudDialog('/diagnosis', getList, { addOnly: true, addSuccessMessage: '诊断保存成功' })
 
 const reset = () => {
   Object.assign(form, {
     symptomId: route.query.symptomId ? Number(route.query.symptomId) : undefined,
     animalId: route.query.animalId ? Number(route.query.animalId) : undefined,
-    vetId: userStore.userInfo.userId,
+    vetId: currentUserId,
     diseaseName: '',
     severity: 1,
-    diagnoseTime: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+    diagnoseTime: now(),
     status: 0
   })
   formRef.value?.resetFields()
@@ -236,14 +188,7 @@ const cancel = () => {
 }
 
 const submitForm = () => {
-  formRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      await request.post('/diagnosis', form)
-      ElMessage.success('诊断保存成功')
-      open.value = false
-      getList()
-    }
-  })
+  submitDiagnosisForm(formRef, form)
 }
 
 const handleTreatment = (row: any) => {
@@ -256,17 +201,7 @@ const handleTreatment = (row: any) => {
   })
 }
 
-const handleInvalidate = (row: any) => {
-  ElMessageBox.confirm(`是否确认作废诊断记录 #${row.id}？作废后仅可由管理员恢复。`, '作废确认', {
-    confirmButtonText: '确定作废',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.put(`/diagnosis/invalidate/${row.id}`)
-    ElMessage.success('作废成功')
-    getList()
-  }).catch(() => {})
-}
+const { handleInvalidate } = useInvalidate('/diagnosis', '诊断', getList)
 
 onMounted(() => {
   getList()
@@ -281,9 +216,4 @@ onMounted(() => {
   padding: 20px;
 }
 
-.pagination-wrapper {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
-}
 </style>

@@ -148,10 +148,14 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import dayjs from 'dayjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/store/user'
+import { now } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useCrudDialog } from '@/composables/useCrudDialog'
+import { useInvalidate } from '@/composables/useInvalidate'
 
 interface FeedingPlanRecord {
   id: number
@@ -176,12 +180,6 @@ interface FeedingExecuteRecord {
 }
 
 const userStore = useUserStore()
-const planLoading = ref(true)
-const recordLoading = ref(true)
-const planList = ref<FeedingPlanRecord[]>([])
-const recordList = ref<FeedingExecuteRecord[]>([])
-const planTotal = ref(0)
-const recordTotal = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -218,65 +216,13 @@ const rules = {
   feedingTime: [{ required: true, message: '计划时间不能为空', trigger: 'change' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const getPlanList = async () => {
-  planLoading.value = true
-  try {
-    const res: any = await request.get('/feeding/plan/page', { params: queryParams })
-    if (res.code === 200) {
-      planList.value = res.data.records
-      planTotal.value = res.data.total
-    }
-  } finally {
-    planLoading.value = false
-  }
-}
+const { loading: planLoading, list: planList, total: planTotal, getList: getPlanList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<FeedingPlanRecord>('/feeding/plan/page', queryParams, { autoFetch: true })
 
-const getRecordList = async () => {
-  recordLoading.value = true
-  try {
-    const res: any = await request.get('/feeding/record/page', { params: recordQueryParams })
-    if (res.code === 200) {
-      recordList.value = res.data.records
-      recordTotal.value = res.data.total
-    }
-  } finally {
-    recordLoading.value = false
-  }
-}
+const { loading: recordLoading, list: recordList, total: recordTotal, getList: getRecordList, handleQuery: handleRecordQuery, handleSizeChange: handleRecordSizeChange, handleCurrentChange: handleRecordCurrentChange } = usePagination<FeedingExecuteRecord>('/feeding/record/page', recordQueryParams, { autoFetch: true })
 
-const handleQuery = () => {
-  queryParams.page = 1
-  getPlanList()
-}
-
-const handleRecordQuery = () => {
-  recordQueryParams.page = 1
-  getRecordList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getPlanList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getPlanList()
-}
-
-const handleRecordSizeChange = (val: number) => {
-  recordQueryParams.size = val
-  getRecordList()
-}
-
-const handleRecordCurrentChange = (val: number) => {
-  recordQueryParams.page = val
-  getRecordList()
-}
+const { reset: resetForm, submitForm: crudSubmit } = useCrudDialog('/feeding/plan', getPlanList, { addSuccessMessage: '新增成功' })
 
 const handleStatusChange = async (row: FeedingPlanRecord) => {
   const originalStatus = row.status === 1 ? 0 : 1
@@ -288,35 +234,9 @@ const handleStatusChange = async (row: FeedingPlanRecord) => {
   }
 }
 
-const handlePlanInvalidate = async (row: FeedingPlanRecord) => {
-  try {
-    await ElMessageBox.confirm(`确认作废饲养计划 #${row.id} 吗？作废后仅可由管理员恢复。`, '作废确认', {
-      type: 'warning',
-      confirmButtonText: '确认作废',
-      cancelButtonText: '取消'
-    })
-    await request.put(`/feeding/plan/invalidate/${row.id}`)
-    ElMessage.success('作废成功')
-    getPlanList()
-  } catch {
-    // ignore cancel action
-  }
-}
+const { handleInvalidate: handlePlanInvalidate } = useInvalidate('/feeding/plan', '饲养计划', getPlanList)
 
-const handleRecordInvalidate = async (row: FeedingExecuteRecord) => {
-  try {
-    await ElMessageBox.confirm(`确认作废饲养执行记录 #${row.id} 吗？作废后仅可由管理员恢复。`, '作废确认', {
-      type: 'warning',
-      confirmButtonText: '确认作废',
-      cancelButtonText: '取消'
-    })
-    await request.put(`/feeding/record/invalidate/${row.id}`)
-    ElMessage.success('作废成功')
-    getRecordList()
-  } catch {
-    // ignore cancel action
-  }
-}
+const { handleInvalidate: handleRecordInvalidate } = useInvalidate('/feeding/record', '饲养执行', getRecordList)
 
 const handleExecute = (row: FeedingPlanRecord) => {
   ElMessageBox.prompt('请输入本次实际总投喂量(kg)', '执行投喂记录', {
@@ -332,7 +252,7 @@ const handleExecute = (row: FeedingPlanRecord) => {
       feedType: row.feedType,
       operatorId: userStore.userInfo.userId,
       totalAmount: value,
-      time: dayjs().format('YYYY/MM/DD HH:mm:ss')
+      time: now()
     }
     await request.post('/feeding/record', record)
     ElMessage.success('投喂记录已生成')
@@ -341,8 +261,7 @@ const handleExecute = (row: FeedingPlanRecord) => {
 }
 
 const reset = () => {
-  Object.assign(form, { id: undefined, shedId: '', inventoryId: undefined, feedType: '', amountPerAnimal: 0, feedingTime: '', status: 1 })
-  formRef.value?.resetFields()
+  resetForm(form, formRef, { id: undefined, shedId: '', inventoryId: undefined, feedType: '', amountPerAnimal: 0, feedingTime: '', status: 1 })
 }
 
 const handle新增 = () => {
@@ -364,24 +283,10 @@ const cancel = () => {
 }
 
 const submitForm = () => {
-  formRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      if (form.id) {
-        await request.put('/feeding/plan', form)
-        ElMessage.success('修改成功')
-      } else {
-        await request.post('/feeding/plan', form)
-        ElMessage.success('新增成功')
-      }
-      open.value = false
-      getPlanList()
-    }
-  })
+  crudSubmit(formRef, form)
 }
 
 onMounted(() => {
-  getPlanList()
-  getRecordList()
   getFeedInventoryList()
 })
 
@@ -411,12 +316,6 @@ const handleInventoryChange = (val: number) => {
 
 .record-card {
   margin-top: 20px;
-}
-
-.pagination-wrapper {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 .card-header {

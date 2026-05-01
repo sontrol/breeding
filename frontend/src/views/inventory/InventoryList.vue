@@ -1,4 +1,4 @@
-﻿﻿<template>
+﻿<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
@@ -23,7 +23,7 @@
         <el-table-column prop="itemName" label="物品名称" align="center" />
         <el-table-column prop="itemType" label="分类" align="center">
           <template #default="scope">
-            <el-tag :type="getTypeTag(scope.row.itemType)">{{ getTypeLabel(scope.row.itemType) }}</el-tag>
+            <el-tag :type="getEnumLabel(inventoryTypeTagMap, scope.row.itemType, 'info')">{{ getEnumLabel(inventoryTypeMap, scope.row.itemType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="batchNumber" label="批次号" align="center" />
@@ -34,7 +34,7 @@
         </el-table-column>
         <el-table-column prop="expireDate" label="过期时间" align="center">
           <template #default="scope">
-            <span :class="{'text-danger': isExpired(scope.row.expireDate)}">{{ formatDate(scope.row.expireDate) }}</span>
+            <span :class="{'text-danger': isExpired(scope.row.expireDate)}">{{ formatDate(scope.row.expireDate, 'YYYY/MM/DD') }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="200">
@@ -95,16 +95,15 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useCrudDialog } from '@/composables/useCrudDialog'
+import { getEnumLabel, inventoryTypeMap, inventoryTypeTagMap } from '@/constants/enums'
 
-const userStore = useUserStore()
-const loading = ref(true)
-const inventoryList = ref([])
-const total = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -133,61 +132,19 @@ const rules = {
   expireDate: [{ required: true, message: '过期时间不能为空', trigger: 'blur' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
-
-const getTypeLabel = (type: number) => {
-  const map: any = { 1: '饲料', 2: '药品', 3: '疫苗', 4: '器械' }
-  return map[type] || '未知'
-}
-
-const getTypeTag = (type: number) => {
-  const map: any = { 1: 'success', 2: 'danger', 3: 'warning', 4: 'info' }
-  return map[type] || 'info'
-}
-
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format('YYYY/MM/DD')
-}
+const { hasPerm } = usePermission()
 
 const isExpired = (dateStr: string) => {
   if (!dateStr) return false
   return new Date(dateStr).getTime() < new Date().getTime()
 }
 
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/inventory/page', { params: queryParams })
-    if (res.code === 200) {
-      inventoryList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
+const { loading, list: inventoryList, total, getList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<any>('/inventory/page', queryParams, { autoFetch: true })
 
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
+const { reset: resetForm } = useCrudDialog('/inventory', getList, { addSuccessMessage: '入库成功' })
 
 const reset = () => {
-  Object.assign(form, { id: undefined, itemName: '', itemType: 1, batchNumber: '', quantity: 0, unit: '', expireDate: '' })
-  formRef.value?.resetFields()
+  resetForm(form, formRef, { id: undefined, itemName: '', itemType: 1, batchNumber: '', quantity: 0, unit: '', expireDate: '' })
   isEdit.value = false
 }
 
@@ -246,9 +203,6 @@ const handleInvalidate = (row: any) => {
   }).catch(() => {})
 }
 
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style scoped>

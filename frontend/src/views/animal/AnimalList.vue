@@ -17,7 +17,7 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
-          <el-button @click="resetQuery" icon="Refresh">重置</el-button>
+          <el-button @click="resetQuery('earTag', 'status')" icon="Refresh">重置</el-button>
           <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('animal:add')">新增</el-button>
         </el-form-item>
       </el-form>
@@ -35,7 +35,7 @@
         </el-table-column>
         <el-table-column prop="status" label="状态" align="center">
           <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">{{ getStatusLabel(scope.row.status) }}</el-tag>
+            <el-tag :type="getEnumLabel(animalStatusTypeMap, scope.row.status, 'info')">{{ getEnumLabel(animalStatusMap, scope.row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="260" class-name="small-padding fixed-width">
@@ -103,11 +103,11 @@
           <el-descriptions-item label="ID">{{ detailAnimal.id }}</el-descriptions-item>
           <el-descriptions-item label="耳标号">{{ detailAnimal.earTag || '-' }}</el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="getStatusType(detailAnimal.status)">{{ getStatusLabel(detailAnimal.status) }}</el-tag>
+            <el-tag :type="getEnumLabel(animalStatusTypeMap, detailAnimal.status, 'info')">{{ getEnumLabel(animalStatusMap, detailAnimal.status) }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="物种">{{ detailAnimal.species || '-' }}</el-descriptions-item>
           <el-descriptions-item label="品种">{{ detailAnimal.variety || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="性别">{{ getGenderLabel(detailAnimal.gender) }}</el-descriptions-item>
+          <el-descriptions-item label="性别">{{ getEnumLabel(genderMap, detailAnimal.gender, '-') }}</el-descriptions-item>
           <el-descriptions-item label="出生日期">{{ formatDate(detailAnimal.birthDate, 'YYYY/MM/DD') }}</el-descriptions-item>
           <el-descriptions-item label="栏舍ID">{{ detailAnimal.shedId ?? '-' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDate(detailAnimal.createTime) }}</el-descriptions-item>
@@ -172,11 +172,14 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useCrudDialog } from '@/composables/useCrudDialog'
+import { getEnumLabel, animalStatusMap, animalStatusTypeMap, genderMap } from '@/constants/enums'
 
 interface AnimalRecord {
   id: number
@@ -218,10 +221,6 @@ interface AnimalDetailResponse {
   treatmentList: TreatmentRecord[]
 }
 
-const userStore = useUserStore()
-const loading = ref(true)
-const animalList = ref<AnimalRecord[]>([])
-const total = ref(0)
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -255,82 +254,28 @@ const rules = {
   species: [{ required: true, message: '物种不能为空', trigger: 'blur' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const getStatusLabel = (status: number) => {
-  const map: any = { 1: '健康', 2: '患病', 3: '隔离', 4: '死亡', 5: '出栏' }
-  return map[status] || '未知'
-}
+const { loading, list: animalList, total, getList, resetQuery, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<AnimalRecord>('/animal/page', queryParams, { autoFetch: true })
 
-const getStatusType = (status: number) => {
-  const map: any = { 1: 'success', 2: 'danger', 3: 'warning', 4: 'info', 5: '' }
-  return map[status] || 'info'
-}
-
-const getGenderLabel = (gender?: number) => {
-  if (gender === 1) return '公'
-  if (gender === 2) return '母'
-  return '-'
-}
-
-const formatDate = (dateStr?: string, format = 'YYYY/MM/DD HH:mm:ss') => {
-  if (!dateStr) return '-'
-  const parsed = dayjs(dateStr)
-  return parsed.isValid() ? parsed.format(format) : dateStr
-}
-
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/animal/page', { params: queryParams })
-    if (res.code === 200) {
-      animalList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const resetQuery = () => {
-  queryParams.earTag = undefined
-  queryParams.status = undefined
-  handleQuery()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
-
-const reset = () => {
-  Object.assign(form, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
-  formRef.value?.resetFields()
-}
+const { reset, submitForm: crudSubmit } = useCrudDialog('/animal', getList, { addSuccessMessage: '添加成功' })
 
 const handle新增 = () => {
-  reset()
+  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
   open.value = true
   title.value = '添加动物'
 }
 
 const handleUpdate = (row: any) => {
-  reset()
+  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
   Object.assign(form, row)
   open.value = true
   title.value = '修改动物'
+}
+
+const cancel = () => {
+  open.value = false
+  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
 }
 
 const handleDetail = async (row: AnimalRecord) => {
@@ -353,19 +298,7 @@ const handleDetail = async (row: AnimalRecord) => {
 }
 
 const submitForm = () => {
-  formRef.value?.validate(async (valid: boolean) => {
-    if (valid) {
-      if (form.id) {
-        await request.put('/animal', form)
-        ElMessage.success('修改成功')
-      } else {
-        await request.post('/animal', form)
-        ElMessage.success('新增成功')
-      }
-      open.value = false
-      getList()
-    }
-  })
+  crudSubmit(formRef, form)
 }
 
 const handleInvalidate = (row: AnimalRecord) => {
@@ -380,9 +313,6 @@ const handleInvalidate = (row: AnimalRecord) => {
   }).catch(() => {})
 }
 
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style scoped>

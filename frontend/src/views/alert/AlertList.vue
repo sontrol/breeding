@@ -27,7 +27,7 @@
         <el-table-column prop="id" label="预警ID" width="80" align="center" />
         <el-table-column prop="ruleType" label="预警类型" align="center">
           <template #default="scope">
-            <el-tag :type="getRuleTypeTag(scope.row.ruleType)">{{ getRuleTypeLabel(scope.row.ruleType) }}</el-tag>
+            <el-tag :type="getEnumLabel(alertRuleTypeTagMap, scope.row.ruleType, 'info')">{{ getEnumLabel(alertRuleTypeMap, scope.row.ruleType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="alertMsg" label="预警内容" align="center" show-overflow-tooltip />
@@ -125,20 +125,20 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useConfirmAction } from '@/composables/useConfirmAction'
+import { useInvalidate } from '@/composables/useInvalidate'
+import { getEnumLabel, alertRuleTypeMap, alertRuleTypeTagMap } from '@/constants/enums'
 
-const userStore = useUserStore()
-const loading = ref(true)
 const checking = ref(false)
 const open = ref(false)
 const formRef = ref<FormInstance>()
-const alertList = ref([])
-const total = ref(0)
 
 const queryParams = reactive({
   page: 1,
@@ -160,68 +160,23 @@ const rules: FormRules = {
   alertMsg: [{ required: true, message: '请输入预警内容', trigger: 'blur' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const getRuleTypeLabel = (type: number) => {
-  const map: Record<number, string> = { 
-    1: '体温异常',
-    2: '未进食异常', 
-    3: '死亡率高',
-    4: '物品过期'
-  }
-  return map[type] || '未知'
-}
+const { loading, list: alertList, total, getList, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<any>('/alert/page', queryParams, { autoFetch: true })
 
-const getRuleTypeTag = (type: number) => {
-  const map: Record<number, string> = { 
-    1: 'danger',
-    2: 'danger', 
-    3: 'danger',
-    4: 'warning'
-  }
-  return map[type] || 'info'
-}
-
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return ''
-  return dayjs(dateStr).format('YYYY/MM/DD HH:mm:ss')
-}
+const { execute: executeHandleAlert } = useConfirmAction({
+  message: '确定将该预警标记为已处理吗？',
+  title: '提示',
+  action: (row: any) => request.put(`/alert/handle/${row.id}`),
+  successMessage: '处理成功',
+  onSuccess: getList
+})
 
 const tableRowClassName = ({ row }: { row: any }) => {
   if (row.status === 0) {
     return 'warning-row'
   }
   return ''
-}
-
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/alert/page', { params: queryParams })
-    if (res.code === 200) {
-      alertList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
 }
 
 const resetForm = () => {
@@ -255,15 +210,7 @@ const submitForm = () => {
 }
 
 const handleAlert = (row: any) => {
-  ElMessageBox.confirm('确定将该预警标记为已处理吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.put(`/alert/handle/${row.id}`)
-    ElMessage.success('处理成功')
-    getList()
-  }).catch(() => {})
+  executeHandleAlert(row)
 }
 
 const handleManualCheck = async () => {
@@ -279,21 +226,8 @@ const handleManualCheck = async () => {
   }
 }
 
-const handleInvalidate = (row: any) => {
-  ElMessageBox.confirm(`确定作废预警记录 #${row.id} 吗？作废后仅可由管理员恢复。`, '作废确认', {
-    confirmButtonText: '确定作废',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.put(`/alert/invalidate/${row.id}`)
-    ElMessage.success('作废成功')
-    getList()
-  }).catch(() => {})
-}
+const { handleInvalidate } = useInvalidate('/alert', '预警', getList)
 
-onMounted(() => {
-  getList()
-})
 </script>
 
 <style>

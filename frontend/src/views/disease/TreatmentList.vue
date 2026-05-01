@@ -9,7 +9,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
-        <el-button icon="Refresh" @click="resetQuery">重置</el-button>
+        <el-button icon="Refresh" @click="resetQuery('animalId', 'diagnosisId')">重置</el-button>
       </el-form-item>
     </el-form>
 
@@ -36,7 +36,7 @@
       </el-table-column>
       <el-table-column prop="time" label="治疗时间" align="center">
         <template #default="scope">
-          {{ formatDate(scope.row.time) }}
+          {{ formatDate(scope.row.time, 'YYYY-MM-DD HH:mm') }}
         </template>
       </el-table-column>
       <el-table-column prop="result" label="治疗结果" align="center" show-overflow-tooltip />
@@ -128,18 +128,19 @@
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
-import { useUserStore } from '@/store/user'
+import { formatDate } from '@/utils/date'
+import { now } from '@/utils/date'
+import { usePermission } from '@/composables/usePermission'
+import { usePagination } from '@/composables/usePagination'
+import { useInvalidate } from '@/composables/useInvalidate'
+import { useCurrentUserId } from '@/composables/useCurrentUser'
 
 const route = useRoute()
-const userStore = useUserStore()
-const loading = ref(true)
-const treatmentList = ref<any[]>([])
-const total = ref(0)
+const currentUserId = useCurrentUserId()
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
@@ -154,10 +155,10 @@ const queryParams = reactive({
 const form = reactive({
   diagnosisId: route.query.diagnosisId ? Number(route.query.diagnosisId) : undefined,
   animalId: route.query.animalId ? Number(route.query.animalId) : undefined,
-  operatorId: userStore.userInfo.userId,
+  operatorId: currentUserId,
   medicineId: undefined as number | undefined,
   dosage: 0,
-  time: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+  time: now(),
   result: '',
   items: [] as any[],
   diagnosisStatus: 0
@@ -181,47 +182,9 @@ const rules = {
   time: [{ required: true, message: '请选择治疗时间', trigger: 'change' }]
 }
 
-const hasPerm = (perm: string) => {
-  return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
-}
+const { hasPerm } = usePermission()
 
-const formatDate = (date: string) => {
-  return date ? dayjs(date).format('YYYY-MM-DD HH:mm') : '-'
-}
-
-const getList = async () => {
-  loading.value = true
-  try {
-    const res: any = await request.get('/treatment/page', { params: queryParams })
-    if (res.code === 200) {
-      treatmentList.value = res.data.records
-      total.value = res.data.total
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleQuery = () => {
-  queryParams.page = 1
-  getList()
-}
-
-const resetQuery = () => {
-  queryParams.animalId = undefined
-  queryParams.diagnosisId = undefined
-  handleQuery()
-}
-
-const handleSizeChange = (val: number) => {
-  queryParams.size = val
-  getList()
-}
-
-const handleCurrentChange = (val: number) => {
-  queryParams.page = val
-  getList()
-}
+const { loading, list: treatmentList, total, getList, resetQuery, handleQuery, handleSizeChange, handleCurrentChange } = usePagination<any>('/treatment/page', queryParams, { autoFetch: true })
 
 const cancel = () => {
   open.value = false
@@ -250,17 +213,7 @@ const submitForm = () => {
   })
 }
 
-const handleInvalidate = (row: any) => {
-  ElMessageBox.confirm(`是否确认作废治疗记录 #${row.id}？作废后仅可由管理员恢复。`, '作废确认', {
-    confirmButtonText: '确定作废',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await request.put(`/treatment/invalidate/${row.id}`)
-    ElMessage.success('作废成功')
-    getList()
-  }).catch(() => {})
-}
+const { handleInvalidate } = useInvalidate('/treatment', '治疗', getList)
 
 const getInventoryList = async () => {
   try {
@@ -308,10 +261,10 @@ const reset = () => {
   Object.assign(form, {
     diagnosisId: route.query.diagnosisId ? Number(route.query.diagnosisId) : undefined,
     animalId: route.query.animalId ? Number(route.query.animalId) : undefined,
-    operatorId: userStore.userInfo.userId,
+    operatorId: currentUserId,
     medicineId: undefined,
     dosage: 0,
-    time: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+    time: now(),
     result: '',
     items: [],
     diagnosisStatus: 0
@@ -320,7 +273,6 @@ const reset = () => {
 }
 
 onMounted(() => {
-  getList()
   getInventoryList()
   if ((route.query.diagnosisId || route.query.animalId) && hasPerm('treatment:add')) {
     handleAdd()
