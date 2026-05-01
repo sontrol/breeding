@@ -21,7 +21,7 @@ public class EventController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long animalId,
-            @RequestParam(required = false) String eventType) {
+            @RequestParam(required = false) Integer eventType) {
         Page<Event> resultPage = eventService.getEventPage(page, size, animalId, eventType);
         return Result.success(resultPage);
     }

@@ -21,6 +21,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/treatment")
 public class TreatmentController {
@@ -61,13 +63,21 @@ public class TreatmentController {
         Treatment treatment = new Treatment();
         treatment.setDiagnosisId(dto.getDiagnosisId());
         treatment.setAnimalId(dto.getAnimalId());
-        treatment.setVetId(dto.getVetId());
+        treatment.setOperatorId(dto.getOperatorId());
         treatment.setMedicineId(dto.getMedicineId());
-        treatment.setDosage(dto.getDosage());
-        treatment.setTreatmentTime(dto.getTreatmentTime());
+        treatment.setTime(dto.getTime());
         treatment.setResult(dto.getResult());
 
         LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (dto.getItems() == null || dto.getItems().isEmpty()) {
+            if (dto.getMedicineId() != null && dto.getDosage() != null) {
+                TreatmentItem singleItem = new TreatmentItem();
+                singleItem.setInventoryId(dto.getMedicineId());
+                singleItem.setDosage(dto.getDosage());
+                dto.setItems(List.of(singleItem));
+            }
+        }
 
         if (dto.getItems() != null && !dto.getItems().isEmpty()) {
             for (TreatmentItem item : dto.getItems()) {
@@ -75,16 +85,9 @@ public class TreatmentController {
                     item.getInventoryId(),
                     item.getDosage(),
                     loginUser.getUser().getId(),
-                    "治疗消耗 - " + item.getItemName() + " - 动物ID:" + dto.getAnimalId()
+                    "治疗消耗 - 动物ID:" + dto.getAnimalId()
                 );
             }
-        } else if (dto.getMedicineId() != null) {
-            inventoryService.deductInventory(
-                dto.getMedicineId(),
-                dto.getDosage(),
-                loginUser.getUser().getId(),
-                "治疗用药消耗 - 动物ID:" + dto.getAnimalId()
-            );
         }
         
         boolean saved = treatmentService.save(treatment);

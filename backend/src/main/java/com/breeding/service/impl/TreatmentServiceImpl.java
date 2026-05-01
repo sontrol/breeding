@@ -35,7 +35,7 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
             wrapper.eq(Treatment::getDiagnosisId, diagnosisId);
         }
         
-        wrapper.orderByDesc(Treatment::getTreatmentTime);
+        wrapper.orderByDesc(Treatment::getTime);
         Page<Treatment> result = this.page(page, wrapper);
         
         Page<TreatmentVO> voPage = new Page<>(result.getCurrent(), result.getSize(), result.getTotal());

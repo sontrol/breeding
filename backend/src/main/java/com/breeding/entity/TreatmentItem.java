@@ -2,6 +2,7 @@ package com.breeding.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -19,6 +20,10 @@ public class TreatmentItem {
     private String itemName;
     private Integer itemType;
     private BigDecimal dosage;
+    @TableLogic
+    private Integer deleted;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime updateTime;
 }

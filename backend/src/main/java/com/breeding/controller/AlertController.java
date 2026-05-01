@@ -31,7 +31,9 @@ public class AlertController {
 
         Alert alert = new Alert();
         alert.setRuleType(alertCreateDTO.getRuleType());
-        alert.setTargetId(alertCreateDTO.getTargetId());
+        alert.setAnimalId(alertCreateDTO.getAnimalId());
+        alert.setShedId(alertCreateDTO.getShedId());
+        alert.setInventoryId(alertCreateDTO.getInventoryId());
         alert.setAlertMsg(alertCreateDTO.getAlertMsg().trim());
         alert.setStatus(0);
         alert.setCreateTime(LocalDateTime.now());
@@ -45,7 +47,7 @@ public class AlertController {
     public Result<Page<Alert>> getPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String ruleType,
+            @RequestParam(required = false) Integer ruleType,
             @RequestParam(required = false) Integer status) {
         Page<Alert> resultPage = alertService.getAlertPage(page, size, ruleType, status);
         return Result.success(resultPage);
@@ -60,7 +62,7 @@ public class AlertController {
         }
         
         LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        alert.setStatus(1); // 已处理
+        alert.setStatus(1);
         alert.setHandleTime(LocalDateTime.now());
         alert.setHandlerId(loginUser.getUser().getId());
         

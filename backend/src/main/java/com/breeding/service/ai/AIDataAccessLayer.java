@@ -251,7 +251,9 @@ public class AIDataAccessLayer {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", alert.getId());
             item.put("rule_type", alert.getRuleType());
-            item.put("target_id", alert.getTargetId());
+            item.put("animal_id", alert.getAnimalId());
+            item.put("shed_id", alert.getShedId());
+            item.put("inventory_id", alert.getInventoryId());
             item.put("alert_msg", alert.getAlertMsg());
             item.put("status", alert.getStatus());
             item.put("status_label", getAlertStatusLabel(alert.getStatus()));
@@ -304,7 +306,7 @@ public class AIDataAccessLayer {
 
     private List<Map<String, Object>> buildTreatmentDetails() {
         List<Treatment> treatments = treatmentService.list(new LambdaQueryWrapper<Treatment>()
-                .orderByDesc(Treatment::getTreatmentTime)
+                .orderByDesc(Treatment::getTime)
                 .last("LIMIT " + DETAIL_LIMIT));
         List<Map<String, Object>> details = new ArrayList<>();
         for (Treatment treatment : treatments) {
@@ -312,10 +314,9 @@ public class AIDataAccessLayer {
             item.put("id", treatment.getId());
             item.put("diagnosis_id", treatment.getDiagnosisId());
             item.put("animal_id", treatment.getAnimalId());
-            item.put("vet_id", treatment.getVetId());
+            item.put("operator_id", treatment.getOperatorId());
             item.put("medicine_id", treatment.getMedicineId());
-            item.put("dosage", treatment.getDosage());
-            item.put("treatment_time", treatment.getTreatmentTime());
+            item.put("time", treatment.getTime());
             item.put("result", treatment.getResult());
             details.add(item);
         }
@@ -343,7 +344,7 @@ public class AIDataAccessLayer {
 
     private List<Map<String, Object>> buildFeedingRecordDetails() {
         List<FeedingRecord> feedingRecords = feedingRecordService.list(new LambdaQueryWrapper<FeedingRecord>()
-                .orderByDesc(FeedingRecord::getExecuteTime)
+                .orderByDesc(FeedingRecord::getTime)
                 .last("LIMIT " + DETAIL_LIMIT));
         List<Map<String, Object>> details = new ArrayList<>();
         for (FeedingRecord feedingRecord : feedingRecords) {
@@ -354,7 +355,7 @@ public class AIDataAccessLayer {
             item.put("operator_id", feedingRecord.getOperatorId());
             item.put("feed_type", feedingRecord.getFeedType());
             item.put("total_amount", feedingRecord.getTotalAmount());
-            item.put("execute_time", feedingRecord.getExecuteTime());
+            item.put("time", feedingRecord.getTime());
             details.add(item);
         }
         return details;

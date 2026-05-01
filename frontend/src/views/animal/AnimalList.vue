@@ -144,10 +144,9 @@
               <el-table-column prop="id" label="ID" width="80" align="center" />
               <el-table-column prop="diagnosisId" label="诊断ID" width="100" align="center" />
               <el-table-column prop="medicineId" label="药品ID" width="100" align="center" />
-              <el-table-column prop="dosage" label="剂量" width="100" align="center" />
-              <el-table-column prop="treatmentTime" label="治疗时间" min-width="180" align="center">
+              <el-table-column prop="time" label="治疗时间" min-width="180" align="center">
                 <template #default="scope">
-                  {{ formatDate(scope.row.treatmentTime) }}
+                  {{ formatDate(scope.row.time) }}
                 </template>
               </el-table-column>
               <el-table-column prop="result" label="治疗结果" min-width="260" show-overflow-tooltip />
@@ -207,7 +206,7 @@ interface TreatmentRecord {
   animalId: number
   medicineId?: number
   dosage?: number
-  treatmentTime?: string
+  time?: string
   result?: string
   createTime?: string
 }

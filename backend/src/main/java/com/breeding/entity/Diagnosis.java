@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
@@ -20,12 +18,14 @@ public class Diagnosis {
     private Long animalId;
     private Long vetId;
     private String diseaseName;
-    private Integer severity; // 严重程度
+    private Integer severity;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime diagnoseTime;
-    private Integer status; // 状态
+    private Integer status;
     @TableLogic
     private Integer deleted;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime updateTime;
 }

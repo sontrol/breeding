@@ -23,7 +23,7 @@ public class FeedingRecordServiceImpl extends ServiceImpl<FeedingRecordMapper, F
             wrapper.eq(FeedingRecord::getOperatorId, operatorId);
         }
         
-        wrapper.orderByDesc(FeedingRecord::getExecuteTime);
+        wrapper.orderByDesc(FeedingRecord::getTime);
         return this.page(page, wrapper);
     }
 }

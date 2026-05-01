@@ -8,8 +8,6 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
@@ -19,14 +17,17 @@ public class FeedingRecord {
     private Long id;
     private Long planId;
     private Long shedId;
-    private Long inventoryId; // 关联库存ID
+    private Long inventoryId;
     private Long operatorId;
+    private Long animalId;
     private String feedType;
     private BigDecimal totalAmount;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-    private LocalDateTime executeTime;
+    private LocalDateTime time;
     @TableLogic
     private Integer deleted;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime updateTime;
 }

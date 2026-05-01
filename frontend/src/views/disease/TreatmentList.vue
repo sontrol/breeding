@@ -30,13 +30,13 @@
               {{ item.itemName }} × {{ item.dosage }}
             </el-tag>
           </div>
-          <span v-else-if="scope.row.medicineId">药品ID: {{ scope.row.medicineId }} ({{ scope.row.dosage }})</span>
+          <span v-else-if="scope.row.medicineId">药品ID: {{ scope.row.medicineId }}</span>
           <span v-else>-</span>
         </template>
       </el-table-column>
-      <el-table-column prop="treatmentTime" label="治疗时间" align="center">
+      <el-table-column prop="time" label="治疗时间" align="center">
         <template #default="scope">
-          {{ formatDate(scope.row.treatmentTime) }}
+          {{ formatDate(scope.row.time) }}
         </template>
       </el-table-column>
       <el-table-column prop="result" label="治疗结果" align="center" show-overflow-tooltip />
@@ -56,6 +56,9 @@
         </el-form-item>
         <el-form-item label="动物ID" prop="animalId">
           <el-input v-model="form.animalId" placeholder="请输入动物ID" />
+        </el-form-item>
+        <el-form-item label="单品用量" prop="dosage" v-if="form.items.length === 0">
+          <el-input-number v-model="form.dosage" :min="0.01" :precision="2" :step="0.5" placeholder="单药用量，多物品请在下方添加" style="width: 100%;" />
         </el-form-item>
         
         <el-divider content-position="left">使用物品（可添加多个）</el-divider>
@@ -100,8 +103,8 @@
         
         <el-button type="primary" plain icon="Plus" @click="addItem" style="margin-bottom: 15px;">添加物品</el-button>
         
-        <el-form-item label="治疗时间" prop="treatmentTime">
-          <el-date-picker v-model="form.treatmentTime" type="datetime" placeholder="选择治疗时间" value-format="YYYY/MM/DD HH:mm:ss" />
+        <el-form-item label="治疗时间" prop="time">
+          <el-date-picker v-model="form.time" type="datetime" placeholder="选择治疗时间" value-format="YYYY/MM/DD HH:mm:ss" />
         </el-form-item>
         <el-form-item label="治疗状态" prop="diagnosisStatus">
           <el-select v-model="form.diagnosisStatus" placeholder="请选择治疗后状态">
@@ -151,10 +154,10 @@ const queryParams = reactive({
 const form = reactive({
   diagnosisId: route.query.diagnosisId ? Number(route.query.diagnosisId) : undefined,
   animalId: route.query.animalId ? Number(route.query.animalId) : undefined,
-  vetId: userStore.userInfo.userId,
+  operatorId: userStore.userInfo.userId,
   medicineId: undefined as number | undefined,
   dosage: 0,
-  treatmentTime: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+  time: dayjs().format('YYYY/MM/DD HH:mm:ss'),
   result: '',
   items: [] as any[],
   diagnosisStatus: 0
@@ -175,7 +178,7 @@ const itemTypeMap: Record<number, string> = {
 const rules = {
   diagnosisId: [{ required: true, message: '请输入诊断ID', trigger: 'blur' }],
   animalId: [{ required: true, message: '请输入动物ID', trigger: 'blur' }],
-  treatmentTime: [{ required: true, message: '请选择治疗时间', trigger: 'change' }]
+  time: [{ required: true, message: '请选择治疗时间', trigger: 'change' }]
 }
 
 const hasPerm = (perm: string) => {
@@ -231,8 +234,10 @@ const submitForm = () => {
       const payload: any = {
         diagnosisId: form.diagnosisId,
         animalId: form.animalId,
-        vetId: form.vetId,
-        treatmentTime: form.treatmentTime,
+        operatorId: form.operatorId,
+        medicineId: form.medicineId,
+        dosage: form.dosage,
+        time: form.time,
         result: form.result,
         diagnosisStatus: form.diagnosisStatus,
         items: form.items.filter((item: any) => item.inventoryId)
@@ -303,10 +308,10 @@ const reset = () => {
   Object.assign(form, {
     diagnosisId: route.query.diagnosisId ? Number(route.query.diagnosisId) : undefined,
     animalId: route.query.animalId ? Number(route.query.animalId) : undefined,
-    vetId: userStore.userInfo.userId,
+    operatorId: userStore.userInfo.userId,
     medicineId: undefined,
     dosage: 0,
-    treatmentTime: dayjs().format('YYYY/MM/DD HH:mm:ss'),
+    time: dayjs().format('YYYY/MM/DD HH:mm:ss'),
     result: '',
     items: [],
     diagnosisStatus: 0

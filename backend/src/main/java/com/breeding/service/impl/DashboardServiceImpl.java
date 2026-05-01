@@ -79,7 +79,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             // 投喂量统计
             QueryWrapper<com.breeding.entity.FeedingRecord> feedingQuery = new QueryWrapper<>();
-            feedingQuery.select("IFNULL(SUM(total_amount), 0) as total").likeRight("execute_time", dateStr);
+            feedingQuery.select("IFNULL(SUM(total_amount), 0) as total").likeRight("time", dateStr);
             Map<String, Object> feedingRes = feedingRecordMapper.selectMaps(feedingQuery).stream().findFirst().orElse(null);
             feedingAmounts.add(feedingRes != null && feedingRes.get("total") != null ? new BigDecimal(feedingRes.get("total").toString()) : BigDecimal.ZERO);
 

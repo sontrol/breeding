@@ -29,11 +29,11 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
     private UserMapper userMapper;
 
     @Override
-    public Page<Alert> getAlertPage(int pageNum, int pageSize, String ruleType, Integer status) {
+    public Page<Alert> getAlertPage(int pageNum, int pageSize, Integer ruleType, Integer status) {
         Page<Alert> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Alert> wrapper = new LambdaQueryWrapper<>();
         
-        if (ruleType != null && !ruleType.isEmpty()) {
+        if (ruleType != null) {
             wrapper.eq(Alert::getRuleType, ruleType);
         }
         if (status != null) {
@@ -62,14 +62,14 @@ public class AlertServiceImpl extends ServiceImpl<AlertMapper, Alert> implements
         for (Inventory item : expiringList) {
             // 检查是否已经为该物品生成过未处理的过期预警，防止重复报警
             boolean exists = this.count(new LambdaQueryWrapper<Alert>()
-                    .eq(Alert::getRuleType, "medicine_expire")
-                    .eq(Alert::getTargetId, item.getId())
+                    .eq(Alert::getRuleType, 4)
+                    .eq(Alert::getInventoryId, item.getId())
                     .eq(Alert::getStatus, 0)) > 0;
             
             if (!exists) {
                 Alert alert = new Alert();
-                alert.setRuleType("medicine_expire");
-                alert.setTargetId(item.getId());
+                alert.setRuleType(4);
+                alert.setInventoryId(item.getId());
                 
                 if (item.getExpireDate().isBefore(today)) {
                     alert.setAlertMsg(String.format("物品 [%s] (批次:%s) 已过期！过期时间：%s", 

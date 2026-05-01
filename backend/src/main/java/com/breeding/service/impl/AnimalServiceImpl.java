@@ -73,7 +73,7 @@ public class AnimalServiceImpl extends ServiceImpl<AnimalMapper, Animal> impleme
         List<Treatment> treatmentList = treatmentMapper.selectList(
                 new LambdaQueryWrapper<Treatment>()
                         .eq(Treatment::getAnimalId, id)
-                        .orderByDesc(Treatment::getTreatmentTime)
+                        .orderByDesc(Treatment::getTime)
         );
 
         detail.setSymptomList(symptomList);

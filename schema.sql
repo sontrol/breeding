@@ -124,7 +124,7 @@ CREATE TABLE animal_status_log (
 CREATE TABLE event (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     animal_id BIGINT NOT NULL COMMENT '关联动物ID',
-    event_type VARCHAR(50) NOT NULL COMMENT '事件类型: feeding, disease, treatment, vaccine, death, sale, transfer',
+    event_type TINYINT COMMENT '1:feeding, 2:disease, 3:treatment, 4:vaccine, 5:death, 6:sale, 7:transfer, 8:status_change',
     event_time DATETIME NOT NULL COMMENT '事件发生时间',
     operator_id BIGINT NOT NULL COMMENT '操作人ID',
     description TEXT COMMENT '事件详情描述',
@@ -132,7 +132,8 @@ CREATE TABLE event (
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '事件中心表(统一记录所有动物生命周期事件)';
 
 -- ==========================================================
@@ -141,6 +142,7 @@ CREATE TABLE event (
 CREATE TABLE feeding_plan (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     shed_id BIGINT NOT NULL COMMENT '目标栏舍',
+    inventory_id BIGINT DEFAULT NULL COMMENT '关联库存ID',
     feed_type VARCHAR(50) NOT NULL COMMENT '饲料类型',
     amount_per_animal DECIMAL(10,2) NOT NULL COMMENT '每只动物投喂量(kg)',
     feeding_time TIME NOT NULL COMMENT '计划投喂时间',
@@ -148,21 +150,25 @@ CREATE TABLE feeding_plan (
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '饲养计划表';
 
 CREATE TABLE feeding_record (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     plan_id BIGINT COMMENT '关联计划ID(可空,表示临时加餐)',
     shed_id BIGINT NOT NULL,
+    inventory_id BIGINT DEFAULT NULL COMMENT '关联库存ID',
     operator_id BIGINT NOT NULL COMMENT '饲养员',
+    animal_id BIGINT DEFAULT NULL COMMENT '关联动物ID(可空,按栏投喂时为空)',
     feed_type VARCHAR(50) NOT NULL,
     total_amount DECIMAL(10,2) NOT NULL COMMENT '总投喂量(kg)',
-    execute_time DATETIME NOT NULL COMMENT '实际执行时间',
+    time DATETIME NOT NULL COMMENT '实际执行时间',
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '饲养执行记录';
 
 -- ==========================================================
@@ -178,13 +184,14 @@ CREATE TABLE symptom (
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '症状记录表';
 
 CREATE TABLE diagnosis (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     symptom_id BIGINT NOT NULL COMMENT '关联症状ID',
-    animal_id BIGINT NOT NULL,
+    animal_id BIGINT NOT NULL COMMENT '关联动物ID',
     vet_id BIGINT NOT NULL COMMENT '诊断兽医ID',
     disease_name VARCHAR(100) NOT NULL COMMENT '确诊疾病名称',
     severity TINYINT COMMENT '1:轻微, 2:中度, 3:严重',
@@ -193,22 +200,23 @@ CREATE TABLE diagnosis (
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '诊断记录表';
 
 CREATE TABLE treatment (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     diagnosis_id BIGINT NOT NULL COMMENT '关联诊断ID',
     animal_id BIGINT NOT NULL,
-    vet_id BIGINT NOT NULL COMMENT '执行兽医ID',
+    operator_id BIGINT NOT NULL COMMENT '执行兽医ID',
     medicine_id BIGINT NULL COMMENT '使用药品ID(多物品时可为空)',
-    dosage DECIMAL(10,2) NULL COMMENT '用药剂量(多物品时可为空)',
-    treatment_time DATETIME NOT NULL COMMENT '治疗时间',
+    time DATETIME NOT NULL COMMENT '治疗时间',
     result VARCHAR(200) COMMENT '治疗效果观察',
     deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '治疗/用药记录表';
 
 -- ==========================================================
@@ -219,18 +227,21 @@ CREATE TABLE vaccine (
     name VARCHAR(100) NOT NULL COMMENT '疫苗名称',
     target_disease VARCHAR(100) NOT NULL COMMENT '预防疾病',
     manufacturer VARCHAR(100),
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '疫苗信息表';
 
 CREATE TABLE vaccine_record (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     animal_id BIGINT NOT NULL,
     vaccine_id BIGINT NOT NULL,
-    vet_id BIGINT NOT NULL,
+    operator_id BIGINT NOT NULL,
     batch_number VARCHAR(50) NOT NULL COMMENT '疫苗批号',
-    inject_time DATETIME NOT NULL COMMENT '接种时间',
+    time DATETIME NOT NULL COMMENT '接种时间',
     next_due_date DATE COMMENT '下次接种日期',
-    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+    deleted TINYINT DEFAULT 0 COMMENT '0:正常, 1:已作废',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT '疫苗接种记录表';
 
 -- ==========================================================
@@ -249,6 +260,7 @@ CREATE TABLE inventory (
     delete_by BIGINT COMMENT '作废人ID',
     delete_time DATETIME COMMENT '作废时间',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_item_batch (item_name, batch_number)
 ) COMMENT '库存表(支持批次和过期时间)';
 
@@ -267,11 +279,14 @@ CREATE TABLE inventory_log (
 -- ==========================================================
 CREATE TABLE alert (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    rule_type VARCHAR(50) NOT NULL COMMENT 'temperature_anomaly, no_food_long, death_rate_high, medicine_expire',
-    target_id BIGINT COMMENT '关联ID(animal_id/shed_id/inventory_id)',
+    rule_type TINYINT COMMENT '1:temperature_anomaly, 2:no_food_long, 3:death_rate_high, 4:medicine_expire',
+    animal_id BIGINT COMMENT '关联动物ID',
+    shed_id BIGINT COMMENT '关联栏舍ID',
+    inventory_id BIGINT COMMENT '关联库存ID',
     alert_msg TEXT NOT NULL COMMENT '预警内容',
     status TINYINT DEFAULT 0 COMMENT '0:未处理, 1:已处理',
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     creator_id BIGINT COMMENT '提交人ID',
     handle_time DATETIME,
     handler_id BIGINT,
@@ -436,7 +451,7 @@ INSERT INTO feeding_plan (id, shed_id, feed_type, amount_per_animal, feeding_tim
 (1, 1, '育肥猪配合饲料', 2.50, '08:00:00', 1),
 (2, 2, '反刍动物精料', 3.20, '09:00:00', 1);
 
-INSERT INTO feeding_record (id, plan_id, shed_id, operator_id, feed_type, total_amount, execute_time) VALUES
+INSERT INTO feeding_record (id, plan_id, shed_id, operator_id, feed_type, total_amount, time) VALUES
 (1, 1, 1, 4, '育肥猪配合饲料', 180.00, DATE_SUB(NOW(), INTERVAL 3 DAY)),
 (2, 1, 1, 4, '育肥猪配合饲料', 175.00, DATE_SUB(NOW(), INTERVAL 2 DAY)),
 (3, 1, 1, 4, '育肥猪配合饲料', 178.00, DATE_SUB(NOW(), INTERVAL 1 DAY)),
@@ -449,28 +464,28 @@ INSERT INTO symptom (id, animal_id, observer_id, symptom_desc, observe_time, sta
 INSERT INTO diagnosis (id, symptom_id, animal_id, vet_id, disease_name, severity, diagnose_time, status) VALUES
 (1, 1, 4, 3, '牛呼吸道感染', 2, DATE_SUB(NOW(), INTERVAL 1 DAY), 0);
 
-INSERT INTO treatment (id, diagnosis_id, animal_id, vet_id, medicine_id, dosage, treatment_time, result) VALUES
-(1, 1, 4, 3, 2, 2.00, DATE_SUB(NOW(), INTERVAL 20 HOUR), '首次用药后体温有所下降，继续观察');
+INSERT INTO treatment (id, diagnosis_id, animal_id, operator_id, medicine_id, time, result) VALUES
+(1, 1, 4, 3, 2, DATE_SUB(NOW(), INTERVAL 20 HOUR), '首次用药后体温有所下降，继续观察');
 
 INSERT INTO vaccine (id, name, target_disease, manufacturer) VALUES
 (1, '口蹄疫灭活疫苗', '口蹄疫', '中牧股份'),
 (2, '猪瘟活疫苗', '猪瘟', '哈药集团');
 
-INSERT INTO vaccine_record (id, animal_id, vaccine_id, vet_id, batch_number, inject_time, next_due_date) VALUES
+INSERT INTO vaccine_record (id, animal_id, vaccine_id, operator_id, batch_number, time, next_due_date) VALUES
 (1, 1, 2, 3, 'VC20260320', DATE_SUB(NOW(), INTERVAL 30 DAY), DATE_ADD(CURDATE(), INTERVAL 150 DAY)),
 (2, 3, 1, 3, 'VC20260320', DATE_SUB(NOW(), INTERVAL 20 DAY), DATE_ADD(CURDATE(), INTERVAL 160 DAY));
 
 INSERT INTO event (id, animal_id, event_type, event_time, operator_id, description, related_id) VALUES
-(1, 1, 'feeding', DATE_SUB(NOW(), INTERVAL 3 DAY), 4, '执行早间投喂计划', 1),
-(2, 4, 'disease', DATE_SUB(NOW(), INTERVAL 2 DAY), 4, '发现异常症状并上报', 1),
-(3, 4, 'treatment', DATE_SUB(NOW(), INTERVAL 20 HOUR), 3, '完成首次治疗', 1),
-(4, 3, 'vaccine', DATE_SUB(NOW(), INTERVAL 20 DAY), 3, '完成口蹄疫疫苗接种', 2),
-(5, 5, 'feeding', DATE_SUB(NOW(), INTERVAL 1 HOUR), 4, '新生羔羊补充营养', NULL);
+(1, 1, 1, DATE_SUB(NOW(), INTERVAL 3 DAY), 4, '执行早间投喂计划', 1),
+(2, 4, 2, DATE_SUB(NOW(), INTERVAL 2 DAY), 4, '发现异常症状并上报', 1),
+(3, 4, 3, DATE_SUB(NOW(), INTERVAL 20 HOUR), 3, '完成首次治疗', 1),
+(4, 3, 4, DATE_SUB(NOW(), INTERVAL 20 DAY), 3, '完成口蹄疫疫苗接种', 2),
+(5, 5, 1, DATE_SUB(NOW(), INTERVAL 1 HOUR), 4, '新生羔羊补充营养', NULL);
 
-INSERT INTO alert (id, rule_type, target_id, alert_msg, status, create_time, creator_id, handle_time, handler_id) VALUES
-(1, 'medicine_expire', 2, '氟苯尼考注射液库存请在到期前完成使用计划核查', 0, DATE_SUB(NOW(), INTERVAL 6 HOUR), NULL, NULL, NULL),
-(2, 'temperature_anomaly', 4, '耳标 EAR2026004 体温异常，请兽医复检', 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 3, DATE_SUB(NOW(), INTERVAL 12 HOUR), 3),
-(3, 'no_food_long', 2, '耳标 EAR2026002 近 6 小时采食异常偏低', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), 4, NULL, NULL);
+INSERT INTO alert (id, rule_type, animal_id, shed_id, inventory_id, alert_msg, status, create_time, creator_id, handle_time, handler_id) VALUES
+(1, 4, NULL, NULL, 2, '氟苯尼考注射液库存请在到期前完成使用计划核查', 0, DATE_SUB(NOW(), INTERVAL 6 HOUR), NULL, NULL, NULL),
+(2, 1, 4, NULL, NULL, '耳标 EAR2026004 体温异常，请兽医复检', 1, DATE_SUB(NOW(), INTERVAL 1 DAY), 3, DATE_SUB(NOW(), INTERVAL 12 HOUR), 3),
+(3, 2, 2, NULL, NULL, '耳标 EAR2026002 近 6 小时采食异常偏低', 0, DATE_SUB(NOW(), INTERVAL 2 HOUR), 4, NULL, NULL);
 
 -- ==========================================================
 -- 12. 外键约束定义
@@ -494,9 +509,12 @@ ALTER TABLE event ADD CONSTRAINT fk_event_operator FOREIGN KEY (operator_id) REF
 
 -- 饲养管理模块 外键
 ALTER TABLE feeding_plan ADD CONSTRAINT fk_feeding_plan_shed FOREIGN KEY (shed_id) REFERENCES shed(id);
+ALTER TABLE feeding_plan ADD CONSTRAINT fk_feeding_plan_inventory FOREIGN KEY (inventory_id) REFERENCES inventory(id);
 ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_plan FOREIGN KEY (plan_id) REFERENCES feeding_plan(id);
 ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_shed FOREIGN KEY (shed_id) REFERENCES shed(id);
 ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_operator FOREIGN KEY (operator_id) REFERENCES user(id);
+ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_inventory FOREIGN KEY (inventory_id) REFERENCES inventory(id);
+ALTER TABLE feeding_record ADD CONSTRAINT fk_feeding_record_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
 
 -- 疾病与治疗管理（三层架构）外键
 ALTER TABLE symptom ADD CONSTRAINT fk_symptom_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
@@ -506,19 +524,22 @@ ALTER TABLE diagnosis ADD CONSTRAINT fk_diagnosis_animal FOREIGN KEY (animal_id)
 ALTER TABLE diagnosis ADD CONSTRAINT fk_diagnosis_vet FOREIGN KEY (vet_id) REFERENCES user(id);
 ALTER TABLE treatment ADD CONSTRAINT fk_treatment_diagnosis FOREIGN KEY (diagnosis_id) REFERENCES diagnosis(id);
 ALTER TABLE treatment ADD CONSTRAINT fk_treatment_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
-ALTER TABLE treatment ADD CONSTRAINT fk_treatment_vet FOREIGN KEY (vet_id) REFERENCES user(id);
+ALTER TABLE treatment ADD CONSTRAINT fk_treatment_operator FOREIGN KEY (operator_id) REFERENCES user(id);
 ALTER TABLE treatment ADD CONSTRAINT fk_treatment_medicine FOREIGN KEY (medicine_id) REFERENCES inventory(id);
 
 -- 疫苗管理模块 外键
 ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
 ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_vaccine FOREIGN KEY (vaccine_id) REFERENCES vaccine(id);
-ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_vet FOREIGN KEY (vet_id) REFERENCES user(id);
+ALTER TABLE vaccine_record ADD CONSTRAINT fk_vaccine_record_operator FOREIGN KEY (operator_id) REFERENCES user(id);
 
 -- 库存管理模块 外键
 ALTER TABLE inventory_log ADD CONSTRAINT fk_inventory_log_inventory FOREIGN KEY (inventory_id) REFERENCES inventory(id);
 ALTER TABLE inventory_log ADD CONSTRAINT fk_inventory_log_operator FOREIGN KEY (operator_id) REFERENCES user(id);
 
 -- 预警与系统日志 外键
+ALTER TABLE alert ADD CONSTRAINT fk_alert_animal FOREIGN KEY (animal_id) REFERENCES animal(id);
+ALTER TABLE alert ADD CONSTRAINT fk_alert_shed FOREIGN KEY (shed_id) REFERENCES shed(id);
+ALTER TABLE alert ADD CONSTRAINT fk_alert_inventory FOREIGN KEY (inventory_id) REFERENCES inventory(id);
 ALTER TABLE alert ADD CONSTRAINT fk_alert_creator FOREIGN KEY (creator_id) REFERENCES user(id);
 ALTER TABLE alert ADD CONSTRAINT fk_alert_handler FOREIGN KEY (handler_id) REFERENCES user(id);
 ALTER TABLE invalid_record ADD CONSTRAINT fk_invalid_record_deleter FOREIGN KEY (deleted_by) REFERENCES user(id);

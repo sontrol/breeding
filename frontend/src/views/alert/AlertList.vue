@@ -1,14 +1,13 @@
-﻿﻿<template>
+<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
         <el-form-item label="预警类型">
           <el-select v-model="queryParams.ruleType" placeholder="请选择预警类型" clearable>
-            <el-option label="体温异常" value="temperature_anomaly" />
-            <el-option label="物品过期预警" value="medicine_expire" />
-            <el-option label="长时间未进食" value="no_food_long" />
-            <el-option label="死亡率异常" value="death_rate_high" />
-            <el-option label="人工上报" value="manual_report" />
+            <el-option label="体温异常" :value="1" />
+            <el-option label="未进食异常" :value="2" />
+            <el-option label="死亡率异常" :value="3" />
+            <el-option label="物品过期预警" :value="4" />
           </el-select>
         </el-form-item>
         <el-form-item label="处理状态">
@@ -96,15 +95,20 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="预警类型" prop="ruleType">
           <el-select v-model="form.ruleType" placeholder="请选择预警类型" style="width: 100%">
-            <el-option label="体温异常" value="temperature_anomaly" />
-            <el-option label="未进食异常" value="no_food_long" />
-            <el-option label="死亡率异常" value="death_rate_high" />
-            <el-option label="物品过期风险" value="medicine_expire" />
-            <el-option label="人工上报" value="manual_report" />
+            <el-option label="体温异常" :value="1" />
+            <el-option label="未进食异常" :value="2" />
+            <el-option label="死亡率异常" :value="3" />
+            <el-option label="物品过期风险" :value="4" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关联ID" prop="targetId">
-          <el-input v-model="form.targetId" placeholder="可选，填写动物/库存等业务ID" />
+        <el-form-item label="动物ID" prop="animalId" v-if="form.ruleType === 1 || form.ruleType === 2">
+          <el-input v-model="form.animalId" placeholder="关联动物ID" />
+        </el-form-item>
+        <el-form-item label="栏舍ID" prop="shedId" v-if="form.ruleType === 3">
+          <el-input v-model="form.shedId" placeholder="关联栏舍ID" />
+        </el-form-item>
+        <el-form-item label="库存ID" prop="inventoryId" v-if="form.ruleType === 4">
+          <el-input v-model="form.inventoryId" placeholder="关联库存ID" />
         </el-form-item>
         <el-form-item label="预警内容" prop="alertMsg">
           <el-input v-model="form.alertMsg" type="textarea" :rows="4" maxlength="200" show-word-limit placeholder="请输入真实预警内容" />
@@ -139,13 +143,15 @@ const total = ref(0)
 const queryParams = reactive({
   page: 1,
   size: 10,
-  ruleType: undefined,
-  status: undefined
+  ruleType: undefined as number | undefined,
+  status: undefined as number | undefined
 })
 
 const form = reactive({
-  ruleType: '',
-  targetId: '',
+  ruleType: null as number | null,
+  animalId: null as number | null,
+  shedId: null as number | null,
+  inventoryId: null as number | null,
   alertMsg: ''
 })
 
@@ -158,24 +164,22 @@ const hasPerm = (perm: string) => {
   return userStore.permissions.includes(perm) || userStore.permissions.includes('system:*') || userStore.roles.includes('admin')
 }
 
-const getRuleTypeLabel = (type: string) => {
-  const map: Record<string, string> = { 
-    'temperature_anomaly': '体温异常',
-    'medicine_expire': '物品过期', 
-    'no_food_long': '未进食异常', 
-    'death_rate_high': '死亡率高',
-    'manual_report': '人工上报'
+const getRuleTypeLabel = (type: number) => {
+  const map: Record<number, string> = { 
+    1: '体温异常',
+    2: '未进食异常', 
+    3: '死亡率高',
+    4: '物品过期'
   }
-  return map[type] || type
+  return map[type] || '未知'
 }
 
-const getRuleTypeTag = (type: string) => {
-  const map: Record<string, string> = { 
-    'temperature_anomaly': 'danger',
-    'medicine_expire': 'warning', 
-    'no_food_long': 'danger', 
-    'death_rate_high': 'danger',
-    'manual_report': 'info'
+const getRuleTypeTag = (type: number) => {
+  const map: Record<number, string> = { 
+    1: 'danger',
+    2: 'danger', 
+    3: 'danger',
+    4: 'warning'
   }
   return map[type] || 'info'
 }
@@ -221,8 +225,10 @@ const handleCurrentChange = (val: number) => {
 }
 
 const resetForm = () => {
-  form.ruleType = ''
-  form.targetId = ''
+  form.ruleType = null
+  form.animalId = null
+  form.shedId = null
+  form.inventoryId = null
   form.alertMsg = ''
   formRef.value?.resetFields()
 }
@@ -237,7 +243,9 @@ const submitForm = () => {
     if (!valid) return
     await request.post('/alert', {
       ruleType: form.ruleType,
-      targetId: form.targetId ? Number(form.targetId) : null,
+      animalId: form.animalId,
+      shedId: form.shedId,
+      inventoryId: form.inventoryId,
       alertMsg: form.alertMsg
     })
     ElMessage.success('预警提交成功')
@@ -296,4 +304,3 @@ onMounted(() => {
   --el-table-tr-bg-color: var(--el-color-warning-light-9);
 }
 </style>
-

@@ -141,12 +141,11 @@ public class InvalidDataServiceImpl implements InvalidDataService {
 
     private static String buildAlertRuleTypeDisplaySql() {
         return "CASE rule_type " +
-                "WHEN 'temperature_anomaly' THEN '体温异常' " +
-                "WHEN 'medicine_expire' THEN '物品过期预警' " +
-                "WHEN 'no_food_long' THEN '未进食异常' " +
-                "WHEN 'death_rate_high' THEN '死亡率异常' " +
-                "WHEN 'manual_report' THEN '人工上报' " +
-                "ELSE IFNULL(rule_type, '-') END";
+                "WHEN 1 THEN '体温异常' " +
+                "WHEN 2 THEN '未进食异常' " +
+                "WHEN 3 THEN '死亡率异常' " +
+                "WHEN 4 THEN '物品过期预警' " +
+                "ELSE IFNULL(CAST(rule_type AS CHAR), '-') END";
     }
 
     private static Set<String> buildArchiveTableNameWhitelist() {

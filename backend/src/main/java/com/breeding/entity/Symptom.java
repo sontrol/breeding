@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 @Data
@@ -21,9 +19,11 @@ public class Symptom {
     private String symptomDesc;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime observeTime;
-    private Integer status; // 状态
+    private Integer status;
     @TableLogic
     private Integer deleted;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime updateTime;
 }

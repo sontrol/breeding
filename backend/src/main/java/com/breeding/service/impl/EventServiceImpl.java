@@ -12,14 +12,14 @@ import org.springframework.stereotype.Service;
 public class EventServiceImpl extends ServiceImpl<EventMapper, Event> implements EventService {
 
     @Override
-    public Page<Event> getEventPage(int pageNum, int pageSize, Long animalId, String eventType) {
+    public Page<Event> getEventPage(int pageNum, int pageSize, Long animalId, Integer eventType) {
         Page<Event> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Event> wrapper = new LambdaQueryWrapper<>();
         
         if (animalId != null) {
             wrapper.eq(Event::getAnimalId, animalId);
         }
-        if (eventType != null && !eventType.isEmpty()) {
+        if (eventType != null) {
             wrapper.eq(Event::getEventType, eventType);
         }
         

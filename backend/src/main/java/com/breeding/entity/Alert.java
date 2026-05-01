@@ -15,12 +15,16 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class Alert {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String ruleType; // medicine_expire, no_food_long, death_rate_high
-    private Long targetId;
+    private Integer ruleType;
+    private Long animalId;
+    private Long shedId;
+    private Long inventoryId;
     private String alertMsg;
-    private Integer status; // 0:未处理, 1:已处理
+    private Integer status;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime updateTime;
     private Long creatorId;
     @TableField(exist = false)
     private String creatorName;

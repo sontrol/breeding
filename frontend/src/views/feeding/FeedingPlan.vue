@@ -87,7 +87,7 @@
         <el-table-column prop="feedType" label="饲料类型" align="center" />
         <el-table-column prop="totalAmount" label="实际总投喂量(kg)" align="center" />
         <el-table-column prop="operatorId" label="操作人ID" align="center" />
-        <el-table-column prop="executeTime" label="执行时间" align="center" min-width="180" />
+        <el-table-column prop="time" label="执行时间" align="center" min-width="180" />
         <el-table-column label="操作" align="center" width="120">
           <template #default="scope">
             <el-button size="small" type="danger" link icon="Delete" @click="handleRecordInvalidate(scope.row)" v-if="hasPerm('feeding:record:invalidate')">作废</el-button>
@@ -172,7 +172,7 @@ interface FeedingExecuteRecord {
   operatorId: number
   feedType: string
   totalAmount: number
-  executeTime: string
+  time: string
 }
 
 const userStore = useUserStore()
@@ -332,7 +332,7 @@ const handleExecute = (row: FeedingPlanRecord) => {
       feedType: row.feedType,
       operatorId: userStore.userInfo.userId,
       totalAmount: value,
-      executeTime: dayjs().format('YYYY/MM/DD HH:mm:ss')
+      time: dayjs().format('YYYY/MM/DD HH:mm:ss')
     }
     await request.post('/feeding/record', record)
     ElMessage.success('投喂记录已生成')

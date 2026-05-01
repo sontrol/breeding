@@ -12,11 +12,11 @@ import java.util.List;
 public class TreatmentAddDTO {
     private Long diagnosisId;
     private Long animalId;
-    private Long vetId;
+    private Long operatorId;
     private Long medicineId;
     private BigDecimal dosage;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
-    private LocalDateTime treatmentTime;
+    private LocalDateTime time;
     private String result;
     private List<TreatmentItem> items;
     private Integer diagnosisStatus;
