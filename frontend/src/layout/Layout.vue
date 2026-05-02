@@ -45,6 +45,10 @@
               <el-icon><Clock /></el-icon>
               <span>治疗记录</span>
             </el-menu-item>
+            <el-menu-item index="/disease/vaccine" v-if="hasPerm('disease:view')">
+              <el-icon><Coin /></el-icon>
+              <span>疫苗管理</span>
+            </el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="/inventory" v-if="hasPerm('inventory:view')">
             <template #title>
@@ -54,6 +58,10 @@
             <el-menu-item index="/inventory/list">
               <el-icon><Goods /></el-icon>
               <span>库存列表</span>
+            </el-menu-item>
+            <el-menu-item index="/inventory/log" v-if="hasPerm('inventory:view')">
+              <el-icon><Document /></el-icon>
+              <span>出入库明细</span>
             </el-menu-item>
           </el-sub-menu>
           <el-sub-menu index="/alert" v-if="hasPerm('alert:view')">
@@ -83,6 +91,10 @@
           <el-menu-item index="/register-audit/list" v-if="hasPerm('system:register:view')">
             <el-icon><Finished /></el-icon>
             <span>注册审核</span>
+          </el-menu-item>
+          <el-menu-item index="/event/list" v-if="hasPerm('event:view')">
+            <el-icon><List /></el-icon>
+            <span>事件中心</span>
           </el-menu-item>
         </el-menu>
       </div>

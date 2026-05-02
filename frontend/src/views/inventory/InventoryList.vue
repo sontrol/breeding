@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="app-container">
     <el-card>
       <el-form :inline="true" :model="queryParams" class="demo-form-inline">
@@ -80,6 +80,9 @@
         <el-form-item label="单位" prop="unit">
           <el-input v-model="form.unit" placeholder="如: kg/盒/支" />
         </el-form-item>
+        <el-form-item label="生产日期">
+          <el-date-picker v-model="form.produceDate" type="date" placeholder="选择生产日期" value-format="YYYY/MM/DD" />
+        </el-form-item>
         <el-form-item label="过期时间" prop="expireDate">
           <el-date-picker v-model="form.expireDate" type="date" placeholder="选择过期日期" value-format="YYYY/MM/DD" />
         </el-form-item>
@@ -123,6 +126,7 @@ const form = reactive({
   batchNumber: '',
   quantity: 0,
   unit: '',
+  produceDate: '',
   expireDate: ''
 })
 
@@ -144,7 +148,7 @@ const { loading, list: inventoryList, total, getList, handleQuery, handleSizeCha
 const { reset: resetForm } = useCrudDialog('/inventory', getList, { addSuccessMessage: '入库成功' })
 
 const reset = () => {
-  resetForm(form, formRef, { id: undefined, itemName: '', itemType: 1, batchNumber: '', quantity: 0, unit: '', expireDate: '' })
+  resetForm(form, formRef, { id: undefined, itemName: '', itemType: 1, batchNumber: '', quantity: 0, unit: '', produceDate: '', expireDate: '' })
   isEdit.value = false
 }
 
@@ -164,6 +168,7 @@ const handleEdit = (row: any) => {
     batchNumber: row.batchNumber, 
     quantity: row.quantity, 
     unit: row.unit, 
+    produceDate: row.produceDate,
     expireDate: row.expireDate 
   })
   open.value = true

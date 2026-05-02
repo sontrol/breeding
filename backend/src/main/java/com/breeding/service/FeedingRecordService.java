@@ -6,4 +6,5 @@ import com.breeding.entity.FeedingRecord;
 
 public interface FeedingRecordService extends IService<FeedingRecord> {
     Page<FeedingRecord> getRecordPage(int page, int size, Long shedId, Long operatorId);
+    boolean addRecordWithInventory(FeedingRecord record, Long operatorId);
 }

@@ -9,5 +9,5 @@ public interface UserService extends IService<User> {
 
     boolean saveUserWithRole(User user);
 
-    boolean deleteUserPermanently(Long userId);
+    boolean invalidateUser(Long userId);
 }

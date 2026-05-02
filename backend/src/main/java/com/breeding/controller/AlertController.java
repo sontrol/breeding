@@ -1,6 +1,7 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.dto.alert.AlertCreateDTO;
@@ -83,7 +84,7 @@ public class AlertController {
             LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             boolean success = invalidDataService.invalidate("alert", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废预警失败");
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             return Result.error(e.getMessage());
         }
     }

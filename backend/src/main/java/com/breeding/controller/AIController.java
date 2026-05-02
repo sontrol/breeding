@@ -2,6 +2,7 @@ package com.breeding.controller;
 
 import com.breeding.common.Result;
 import com.breeding.service.ai.AIService;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,5 +31,6 @@ public class AIController {
 
 @Data
 class ChatDTO {
+    @NotBlank(message = "查询内容不能为空")
     private String message;
 }

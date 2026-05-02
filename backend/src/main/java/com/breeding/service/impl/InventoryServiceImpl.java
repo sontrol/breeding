@@ -11,6 +11,7 @@ import com.breeding.mapper.InventoryMapper;
 import com.breeding.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,6 +39,7 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deductInventory(Long inventoryId, BigDecimal quantity, Long operatorId, String remark) {
         Inventory inventory = this.getById(inventoryId);
         if (inventory == null) {
@@ -63,6 +65,7 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deductByItemName(String itemName, BigDecimal quantity, Long operatorId, String remark) {
         LambdaQueryWrapper<Inventory> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Inventory::getItemName, itemName)

@@ -6,6 +6,7 @@ import com.breeding.common.Result;
 import com.breeding.dto.auth.RegisterDTO;
 import com.breeding.service.RegisterService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,7 +34,7 @@ public class AuthController {
     private RegisterService registerService;
 
     @PostMapping("/login")
-    public Result<Map<String, Object>> login(@RequestBody LoginDTO loginDTO) {
+    public Result<Map<String, Object>> login(@Valid @RequestBody LoginDTO loginDTO) {
         try {
             // 1. 用户认证
             Authentication authentication = authenticationManager.authenticate(
@@ -57,7 +58,7 @@ public class AuthController {
             data.put("permissions", loginUser.getPermissions().stream().filter(p -> !p.startsWith("ROLE_")).toList());
 
             return Result.success(data);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             e.printStackTrace();
             String message = e.getMessage();
             if (message == null || message.isBlank()) {
@@ -83,6 +84,8 @@ public class AuthController {
 
 @Data
 class LoginDTO {
+    @NotBlank(message = "用户名不能为空")
     private String username;
+    @NotBlank(message = "密码不能为空")
     private String password;
 }

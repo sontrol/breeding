@@ -1,11 +1,13 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.entity.Symptom;
 import com.breeding.service.InvalidDataService;
 import com.breeding.service.SymptomService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,7 +36,7 @@ public class SymptomController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('disease:add')")
-    public Result<Boolean> add(@RequestBody Symptom symptom) {
+    public Result<Boolean> add(@Valid @RequestBody Symptom symptom) {
         return symptomService.save(symptom) ? Result.success() : Result.error("上报症状失败");
     }
 
@@ -45,7 +47,7 @@ public class SymptomController {
             LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             boolean success = invalidDataService.invalidate("symptom", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废症状失败");
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             return Result.error(e.getMessage());
         }
     }

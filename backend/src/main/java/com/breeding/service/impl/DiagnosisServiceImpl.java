@@ -53,7 +53,8 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
             }
             if (diagnosis.getAnimalId() != null) {
                 Animal animal = animalService.getById(diagnosis.getAnimalId());
-                if (animal != null && animal.getStatus() != 4 && animal.getStatus() != 5) {
+                // 仅在动物为"健康"(1)时才改为"患病"(2)；隔离(3)/死亡(4)/出栏(5)保持原状态
+                if (animal != null && animal.getStatus() == 1) {
                     animal.setStatus(2);
                     animalService.updateById(animal);
                 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.breeding.common.Result;
 import com.breeding.entity.Event;
 import com.breeding.service.EventService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class EventController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('event:add')")
-    public Result<Boolean> add(@RequestBody Event event) {
+    public Result<Boolean> add(@Valid @RequestBody Event event) {
         return eventService.save(event) ? Result.success() : Result.error("记录事件失败");
     }
 }

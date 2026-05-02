@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.breeding.entity.User;
 import com.breeding.mapper.UserMapper;
 import com.breeding.service.UserService;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,12 +14,6 @@ import java.util.List;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
-
-    private final JdbcTemplate jdbcTemplate;
-
-    public UserServiceImpl(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public Page<User> getUserPage(int pageNum, int pageSize, String username, String realName, String roleCode) {
@@ -64,9 +57,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean deleteUserPermanently(Long userId) {
-        jdbcTemplate.update("DELETE FROM user_role WHERE user_id = ?", userId);
-        return jdbcTemplate.update("DELETE FROM user WHERE id = ?", userId) > 0;
+    public boolean invalidateUser(Long userId) {
+        User user = new User();
+        user.setId(userId);
+        user.setStatus(0);
+        user.setDeleted(1);
+        return this.updateById(user);
     }
 
     private String resolveUserRoleCode(User user) {

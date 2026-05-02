@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -16,8 +18,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 public class Inventory {
     @TableId(type = IdType.AUTO)
     private Long id;
+    @NotBlank(message = "物品名称不能为空")
     private String itemName;
+    @NotNull(message = "物品分类不能为空")
     private Integer itemType;
+    @NotBlank(message = "批次号不能为空")
     private String batchNumber;
     private BigDecimal quantity;
     private String unit;

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class Diagnosis {
     private Long symptomId;
     private Long animalId;
     private Long vetId;
+    @NotBlank(message = "疾病名称不能为空")
     private String diseaseName;
     private Integer severity;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")

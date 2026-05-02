@@ -1,5 +1,6 @@
 package com.breeding.controller;
 
+import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.service.InvalidDataService;
@@ -44,7 +45,7 @@ public class InvalidDataController {
         for (String dt : typesToQuery) {
             try {
                 allRecords.addAll(invalidDataService.getInvalidDataList(dt, 1, 1000));
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("查询作废数据失败, dataType={}", dt, e);
             }
         }
@@ -68,7 +69,7 @@ public class InvalidDataController {
         try {
             LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             return invalidDataService.restore(dataType, dataId, loginUser.getUser().getId()) ? Result.success() : Result.error("恢复失败");
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             return Result.error(e.getMessage());
         }
     }

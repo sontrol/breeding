@@ -1,10 +1,12 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.entity.User;
 import com.breeding.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,14 +37,17 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('system:user:add')")
-    public Result<Boolean> add(@RequestBody User user) {
+    public Result<Boolean> add(@Valid @RequestBody User user) {
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            return Result.error("密码不能为空");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userService.saveUserWithRole(user) ? Result.success() : Result.error("新增用户失败");
     }
 
     @PutMapping
     @PreAuthorize("hasAuthority('system:user:edit')")
-    public Result<Boolean> update(@RequestBody User user) {
+    public Result<Boolean> update(@Valid @RequestBody User user) {
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
         } else {
@@ -57,11 +62,11 @@ public class UserController {
         try {
             LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             if (id.equals(loginUser.getUser().getId())) {
-                return Result.error("当前登录账号不允许删除");
+                return Result.error("不能作废自己的账号");
             }
-            boolean success = userService.deleteUserPermanently(id);
-            return success ? Result.success() : Result.error("删除用户失败");
-        } catch (Exception e) {
+            boolean success = userService.invalidateUser(id);
+            return success ? Result.success() : Result.error("作废用户失败");
+        } catch (BusinessException e) {
             return Result.error(e.getMessage());
         }
     }

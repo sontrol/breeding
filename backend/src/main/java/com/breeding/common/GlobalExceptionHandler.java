@@ -1,11 +1,10 @@
 package com.breeding.common;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.sql.SQLIntegrityConstraintViolationException;
 
 /**
  * 全局异常处理
@@ -23,11 +22,12 @@ public class GlobalExceptionHandler {
 
     /**
      * 处理唯一约束冲突异常 (如用户名重复、耳标号重复)
+     * Spring @Transactional 会将 SQLIntegrityConstraintViolationException 包装为 DataIntegrityViolationException
      */
-    @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
-    public Result<String> handleSQLIntegrityConstraintViolationException(SQLIntegrityConstraintViolationException e) {
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public Result<String> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         String msg = e.getMessage();
-        if (msg.contains("Duplicate entry")) {
+        if (msg != null && msg.contains("Duplicate entry")) {
             return Result.error("提交的数据已存在，请检查唯一性字段（如用户名、耳标号、批次号等）");
         }
         return Result.error("数据库操作约束异常: " + msg);

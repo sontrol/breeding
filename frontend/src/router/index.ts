@@ -65,6 +65,12 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: 'InventoryList',
         component: () => import('../views/inventory/InventoryList.vue'),
         meta: { title: '库存列表', icon: 'Box' }
+      },
+      {
+        path: 'log',
+        name: 'InventoryLog',
+        component: () => import('../views/inventory/InventoryLog.vue'),
+        meta: { title: '出入库明细', icon: 'Document' }
       }
     ]
   },
@@ -91,6 +97,12 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: 'TreatmentList',
         component: () => import('../views/disease/TreatmentList.vue'),
         meta: { title: '治疗记录', icon: 'MagicStick' }
+      },
+      {
+        path: 'vaccine',
+        name: 'VaccineList',
+        component: () => import('../views/disease/VaccineList.vue'),
+        meta: { title: '疫苗管理', icon: 'Coin' }
       }
     ]
   },
@@ -105,6 +117,20 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         name: 'AIChat',
         component: () => import('../views/ai/AIChat.vue'),
         meta: { title: 'AI 助手', icon: 'Monitor' }
+      }
+    ]
+  },
+  {
+    path: '/event',
+    name: 'Event',
+    component: () => import('../layout/Layout.vue'),
+    meta: { title: '事件中心', permission: 'event:view' },
+    children: [
+      {
+        path: 'list',
+        name: 'EventList',
+        component: () => import('../views/event/EventList.vue'),
+        meta: { title: '事件记录', icon: 'List' }
       }
     ]
   },

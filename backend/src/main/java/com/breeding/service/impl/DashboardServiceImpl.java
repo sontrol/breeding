@@ -2,7 +2,6 @@ package com.breeding.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.breeding.mapper.AnimalMapper;
-import com.breeding.mapper.EventMapper;
 import com.breeding.mapper.FeedingRecordMapper;
 import com.breeding.mapper.SymptomMapper;
 import com.breeding.service.DashboardService;
@@ -25,9 +24,6 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Autowired
     private SymptomMapper symptomMapper;
-
-    @Autowired
-    private EventMapper eventMapper;
 
     @Autowired
     private FeedingRecordMapper feedingRecordMapper;

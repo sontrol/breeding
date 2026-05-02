@@ -1,18 +1,18 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.entity.Animal;
 import com.breeding.service.AnimalService;
 import com.breeding.service.InvalidDataService;
 import com.breeding.vo.AnimalDetailVO;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/animal")
@@ -23,6 +23,12 @@ public class AnimalController {
 
     @Autowired
     private InvalidDataService invalidDataService;
+
+    @GetMapping("/list")
+    @PreAuthorize("hasAuthority('animal:view')")
+    public Result<java.util.List<Animal>> list() {
+        return Result.success(animalService.list());
+    }
 
     @GetMapping("/page")
     @PreAuthorize("hasAuthority('animal:view')")
@@ -54,14 +60,14 @@ public class AnimalController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('animal:add')")
-    public Result<Boolean> add(@RequestBody Animal animal) {
+    public Result<Boolean> add(@Valid @RequestBody Animal animal) {
         boolean saved = animalService.save(animal);
         return saved ? Result.success() : Result.error("新增失败");
     }
 
     @PutMapping
     @PreAuthorize("hasAuthority('animal:edit')")
-    public Result<Boolean> update(@RequestBody Animal animal) {
+    public Result<Boolean> update(@Valid @RequestBody Animal animal) {
         boolean updated = animalService.updateById(animal);
         return updated ? Result.success() : Result.error("更新失败");
     }
@@ -79,7 +85,7 @@ public class AnimalController {
             LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             boolean success = invalidDataService.invalidate("animal", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废失败");
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             return Result.error(e.getMessage());
         }
     }

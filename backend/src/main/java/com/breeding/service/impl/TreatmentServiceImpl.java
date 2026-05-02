@@ -3,15 +3,23 @@ package com.breeding.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.breeding.common.BusinessException;
+import com.breeding.dto.treatment.TreatmentAddDTO;
+import com.breeding.entity.Animal;
+import com.breeding.entity.Diagnosis;
 import com.breeding.entity.Treatment;
 import com.breeding.entity.TreatmentItem;
 import com.breeding.mapper.TreatmentItemMapper;
 import com.breeding.mapper.TreatmentMapper;
+import com.breeding.service.AnimalService;
+import com.breeding.service.DiagnosisService;
+import com.breeding.service.InventoryService;
 import com.breeding.service.TreatmentService;
 import com.breeding.vo.TreatmentVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +30,15 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
 
     @Autowired
     private TreatmentItemMapper treatmentItemMapper;
+
+    @Autowired
+    private InventoryService inventoryService;
+
+    @Autowired
+    private DiagnosisService diagnosisService;
+
+    @Autowired
+    private AnimalService animalService;
 
     @Override
     public Page<TreatmentVO> getTreatmentPage(int pageNum, int pageSize, Long animalId, Long diagnosisId) {
@@ -65,5 +82,73 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
         
         voPage.setRecords(voList);
         return voPage;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean addTreatmentWithItems(TreatmentAddDTO dto, Long operatorId) {
+        Treatment treatment = new Treatment();
+        treatment.setDiagnosisId(dto.getDiagnosisId());
+        treatment.setAnimalId(dto.getAnimalId());
+        treatment.setOperatorId(dto.getOperatorId());
+        treatment.setMedicineId(dto.getMedicineId());
+        treatment.setTime(dto.getTime());
+        treatment.setResult(dto.getResult());
+
+        if (dto.getItems() == null || dto.getItems().isEmpty()) {
+            if (dto.getMedicineId() != null && dto.getDosage() != null) {
+                TreatmentItem singleItem = new TreatmentItem();
+                singleItem.setInventoryId(dto.getMedicineId());
+                singleItem.setDosage(dto.getDosage());
+                dto.setItems(List.of(singleItem));
+            }
+        }
+
+        if (dto.getItems() != null && !dto.getItems().isEmpty()) {
+            for (TreatmentItem item : dto.getItems()) {
+                if (item == null || item.getInventoryId() == null) {
+                    throw new BusinessException("治疗药品明细数据不完整");
+                }
+                inventoryService.deductInventory(
+                    item.getInventoryId(),
+                    item.getDosage(),
+                    operatorId,
+                    "治疗消耗 - 动物ID:" + dto.getAnimalId()
+                );
+            }
+        }
+        
+        boolean saved = this.save(treatment);
+        
+        if (saved && dto.getItems() != null && !dto.getItems().isEmpty()) {
+            for (TreatmentItem item : dto.getItems()) {
+                if (item != null) {
+                    item.setTreatmentId(treatment.getId());
+                    treatmentItemMapper.insert(item);
+                }
+            }
+        }
+
+        if (saved && dto.getDiagnosisId() != null && dto.getDiagnosisStatus() != null) {
+            Diagnosis diagnosis = diagnosisService.getById(dto.getDiagnosisId());
+            if (diagnosis != null) {
+                diagnosis.setStatus(dto.getDiagnosisStatus());
+                diagnosisService.updateById(diagnosis);
+
+                if (dto.getAnimalId() != null) {
+                    Animal animal = animalService.getById(dto.getAnimalId());
+                    if (animal != null) {
+                        if (dto.getDiagnosisStatus() == 1) {
+                            animal.setStatus(1);
+                        } else if (dto.getDiagnosisStatus() == 2) {
+                            animal.setStatus(4);
+                        }
+                        animalService.updateById(animal);
+                    }
+                }
+            }
+        }
+        
+        return saved;
     }
 }

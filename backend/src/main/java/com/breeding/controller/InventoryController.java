@@ -1,11 +1,13 @@
 package com.breeding.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.common.Result;
 import com.breeding.entity.Inventory;
 import com.breeding.service.InvalidDataService;
 import com.breeding.service.InventoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,13 +42,13 @@ public class InventoryController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('inventory:add')")
-    public Result<Boolean> add(@RequestBody Inventory inventory) {
+    public Result<Boolean> add(@Valid @RequestBody Inventory inventory) {
         return inventoryService.save(inventory) ? Result.success() : Result.error("入库失败");
     }
 
     @PutMapping
     @PreAuthorize("hasAuthority('inventory:edit')")
-    public Result<Boolean> update(@RequestBody Inventory inventory) {
+    public Result<Boolean> update(@Valid @RequestBody Inventory inventory) {
         Inventory existing = inventoryService.getById(inventory.getId());
         if (existing == null) {
             return Result.error("库存记录不存在");
@@ -68,7 +70,7 @@ public class InventoryController {
             LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             boolean success = invalidDataService.invalidate("inventory", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废失败");
-        } catch (Exception e) {
+        } catch (BusinessException e) {
             return Result.error(e.getMessage());
         }
     }
