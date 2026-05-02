@@ -14,7 +14,7 @@
             <el-avatar :icon="msg.role === 'user' ? 'UserFilled' : 'Platform'" :class="msg.role" />
           </div>
           <div class="content">
-            <div class="text" v-html="formatContent(msg.content)"></div>
+            <div class="text" v-text="msg.content"></div>
           </div>
         </div>
         <div v-if="loading" class="message-item is-ai">
@@ -63,10 +63,6 @@ const scrollToBottom = () => {
       chatWindow.value.scrollTop = chatWindow.value.scrollHeight
     }
   })
-}
-
-const formatContent = (content: string) => {
-  return content.replace(/\n/g, '<br/>')
 }
 
 const handleEnter = (event: KeyboardEvent) => {
@@ -157,7 +153,8 @@ const sendMessage = async () => {
   padding: 12px 16px;
   border-radius: 8px;
   line-height: 1.5;
-  word-wrap: break-word;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 .is-user .content .text {
   background-color: #409EFF;
