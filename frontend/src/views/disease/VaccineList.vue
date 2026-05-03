@@ -139,7 +139,6 @@ import request from '@/api/request'
 import { formatDate } from '@/utils/date'
 import { usePermission } from '@/composables/usePermission'
 import { usePagination } from '@/composables/usePagination'
-import { useCrudDialog } from '@/composables/useCrudDialog'
 
 const activeTab = ref('vaccine')
 const { hasPerm } = usePermission()
@@ -211,8 +210,6 @@ const handleInvalidateRecord = (row: any) => {
     ElMessage.success('作废成功'); getRecordList()
   }).catch(() => {})
 }
-
-const switchToRecords = () => { activeTab.value = 'record'; getRecordList() }
 </script>
 
 <style scoped>

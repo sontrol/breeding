@@ -5,8 +5,8 @@ import lombok.Data;
 
 @Data
 public class RegisterAuditDTO {
-    @NotNull(message = "用户ID不能为空")
-    private Long userId;
+    @NotNull(message = "注册申请ID不能为空")
+    private Long registerId;
 
     private String auditRemark;
 }

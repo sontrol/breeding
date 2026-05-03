@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,9 +39,8 @@ public class DashboardServiceImpl implements DashboardService {
         result.put("currentStock", currentStock);
 
         // 今日新生 (出生日期为今天)
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         Long newBornToday = animalMapper.selectCount(new QueryWrapper<com.breeding.entity.Animal>()
-                .eq("birth_date", today));
+                .eq("birth_date", LocalDate.now()));
         result.put("newBornToday", newBornToday);
 
         // 患病隔离 (状态为 2:患病 或 3:隔离)
@@ -50,10 +49,12 @@ public class DashboardServiceImpl implements DashboardService {
         result.put("sickAndIsolated", sickAndIsolated);
 
         // 本月出栏 (状态为 5:出栏 且更新时间在本月)
-        String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate nextMonthStart = monthStart.plusMonths(1);
         Long outThisMonth = animalMapper.selectCount(new QueryWrapper<com.breeding.entity.Animal>()
                 .eq("status", 5)
-                .likeRight("update_time", currentMonth));
+                .ge("update_time", monthStart)
+                .lt("update_time", nextMonthStart));
         result.put("outThisMonth", outThisMonth);
 
         // 2. 饼图：动物健康状态分布
@@ -70,22 +71,29 @@ public class DashboardServiceImpl implements DashboardService {
         List<Long> outCounts = new ArrayList<>();
 
         for (int i = 6; i >= 0; i--) {
-            String dateStr = LocalDate.now().minusDays(i).format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-            dates.add(dateStr);
+            LocalDate date = LocalDate.now().minusDays(i);
+            LocalDateTime dayStart = date.atStartOfDay();
+            LocalDateTime nextDayStart = date.plusDays(1).atStartOfDay();
+            dates.add(date.toString());
 
             // 投喂量统计
             QueryWrapper<com.breeding.entity.FeedingRecord> feedingQuery = new QueryWrapper<>();
-            feedingQuery.select("IFNULL(SUM(total_amount), 0) as total").likeRight("time", dateStr);
+            feedingQuery.select("IFNULL(SUM(total_amount), 0) as total")
+                    .ge("time", dayStart)
+                    .lt("time", nextDayStart);
             Map<String, Object> feedingRes = feedingRecordMapper.selectMaps(feedingQuery).stream().findFirst().orElse(null);
             feedingAmounts.add(feedingRes != null && feedingRes.get("total") != null ? new BigDecimal(feedingRes.get("total").toString()) : BigDecimal.ZERO);
 
             // 发病数统计 (symptom表按发现时间)
-            diseaseCounts.add(symptomMapper.selectCount(new QueryWrapper<com.breeding.entity.Symptom>().likeRight("observe_time", dateStr)));
+            diseaseCounts.add(symptomMapper.selectCount(new QueryWrapper<com.breeding.entity.Symptom>()
+                    .ge("observe_time", dayStart)
+                    .lt("observe_time", nextDayStart)));
 
             // 出栏数统计 (animal状态变更为5的时间)
             outCounts.add(animalMapper.selectCount(new QueryWrapper<com.breeding.entity.Animal>()
                     .eq("status", 5)
-                    .likeRight("update_time", dateStr)));
+                    .ge("update_time", dayStart)
+                    .lt("update_time", nextDayStart)));
         }
 
         result.put("chartDates", dates);

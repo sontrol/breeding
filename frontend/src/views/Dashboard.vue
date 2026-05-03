@@ -43,12 +43,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
 import request from '@/api/request'
 
 const pieChartRef = ref()
 const lineChartRef = ref()
+let pieChart: echarts.ECharts | null = null
+let lineChart: echarts.ECharts | null = null
 
 const stats = ref({
   currentStock: 0,
@@ -76,7 +78,7 @@ const fetchStats = async () => {
 
 const renderCharts = () => {
   // 初始化饼图（动物状态分布）
-  const pieChart = echarts.init(pieChartRef.value)
+  pieChart = echarts.init(pieChartRef.value)
   pieChart.setOption({
     title: {
       text: '动物健康状态分布',
@@ -95,7 +97,7 @@ const renderCharts = () => {
         radius: '55%',
         top: 88,
         bottom: 16,
-        data: stats.value.statusDistribution,
+        data: stats.value.statusDistribution || [],
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
@@ -108,13 +110,14 @@ const renderCharts = () => {
   })
 
   // 初始化折线图（近期事件统计）
-  const lineChart = echarts.init(lineChartRef.value)
-  
+  lineChart = echarts.init(lineChartRef.value)
+
   // Format the dates for the line chart display
-  const formattedDates = stats.value.chartDates.map(date => {
-    return date.replace(/-/g, '/')
-  })
-  
+  const dates = stats.value.chartDates
+  const formattedDates = dates && dates.length > 0
+    ? dates.map((date: string) => date.replace(/-/g, '/'))
+    : []
+
   lineChart.setOption({
     title: {
       text: '近7天核心事件统计',
@@ -131,15 +134,20 @@ const renderCharts = () => {
     xAxis: { type: 'category', boundaryGap: false, data: formattedDates },
     yAxis: { type: 'value' },
     series: [
-      { name: '投喂量(kg)', type: 'line', data: stats.value.feedingAmounts },
-      { name: '发病数', type: 'line', data: stats.value.diseaseCounts },
-      { name: '出栏数', type: 'line', data: stats.value.outCounts }
+      { name: '投喂量(kg)', type: 'line', data: stats.value.feedingAmounts || [] },
+      { name: '发病数', type: 'line', data: stats.value.diseaseCounts || [] },
+      { name: '出栏数', type: 'line', data: stats.value.outCounts || [] }
     ]
   })
 }
 
 onMounted(() => {
   fetchStats()
+})
+
+onUnmounted(() => {
+  pieChart?.dispose()
+  lineChart?.dispose()
 })
 </script>
 

@@ -83,7 +83,7 @@ public class AIService {
         }
 
         // 5. 记录AI访问审计日志 (动态追踪)
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LoginUser loginUser = LoginUser.getCurrentUser();
         systemLogService.logAIAccess(loginUser.getUser().getId(), userMessage, accessedModules, aiResponseContent);
 
         return aiResponseContent;

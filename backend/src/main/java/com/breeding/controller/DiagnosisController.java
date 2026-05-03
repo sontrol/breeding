@@ -10,8 +10,9 @@ import com.breeding.service.DiagnosisService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/diagnosis")
@@ -44,7 +45,7 @@ public class DiagnosisController {
     @PreAuthorize("hasAuthority('diagnosis:invalidate')")
     public Result<Boolean> invalidate(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("diagnosis", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废诊断失败");
         } catch (BusinessException e) {

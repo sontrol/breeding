@@ -28,7 +28,7 @@ public class AlertController {
     @PostMapping
     @PreAuthorize("hasAuthority('alert:add')")
     public Result<Boolean> addAlert(@Valid @RequestBody AlertCreateDTO alertCreateDTO) {
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LoginUser loginUser = LoginUser.getCurrentUser();
 
         Alert alert = new Alert();
         alert.setRuleType(alertCreateDTO.getRuleType());
@@ -62,7 +62,7 @@ public class AlertController {
             return Result.error("预警记录不存在");
         }
         
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LoginUser loginUser = LoginUser.getCurrentUser();
         alert.setStatus(1);
         alert.setHandleTime(LocalDateTime.now());
         alert.setHandlerId(loginUser.getUser().getId());
@@ -81,7 +81,7 @@ public class AlertController {
     @PreAuthorize("hasAuthority('alert:invalidate')")
     public Result<Boolean> invalidate(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("alert", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废预警失败");
         } catch (BusinessException e) {

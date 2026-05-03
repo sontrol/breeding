@@ -67,7 +67,7 @@ public class InventoryController {
     @PreAuthorize("hasAuthority('inventory:invalidate')")
     public Result<Boolean> invalidate(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("inventory", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废失败");
         } catch (BusinessException e) {

@@ -2,6 +2,7 @@ package com.breeding.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -21,6 +22,11 @@ public class Shed {
     private Integer capacity;
     private Integer currentCount;
     private Long managerId;
+    @TableLogic
+    private Integer deleted;
+    private Long deleteBy;
+    @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
+    private LocalDateTime deleteTime;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")
     private LocalDateTime createTime;
     @JsonFormat(pattern = "yyyy/MM/dd HH:mm:ss")

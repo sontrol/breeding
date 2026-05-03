@@ -43,7 +43,7 @@ public class TreatmentController {
     @PreAuthorize("hasAuthority('treatment:add')")
     public Result<Boolean> add(@Valid @RequestBody TreatmentAddDTO dto) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean saved = treatmentService.addTreatmentWithItems(dto, loginUser.getUser().getId());
             return saved ? Result.success() : Result.error("治疗记录保存失败");
         } catch (BusinessException e) {
@@ -58,7 +58,7 @@ public class TreatmentController {
     @PreAuthorize("hasAuthority('treatment:invalidate')")
     public Result<Boolean> invalidate(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("treatment", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废治疗失败");
         } catch (BusinessException e) {

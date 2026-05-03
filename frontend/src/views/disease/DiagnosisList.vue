@@ -204,7 +204,6 @@ const handleTreatment = (row: any) => {
 const { handleInvalidate } = useInvalidate('/diagnosis', '诊断', getList)
 
 onMounted(() => {
-  getList()
   if ((route.query.symptomId || route.query.animalId) && hasPerm('diagnosis:add')) {
     handleAdd()
   }

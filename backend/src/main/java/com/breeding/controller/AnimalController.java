@@ -82,7 +82,7 @@ public class AnimalController {
     @PreAuthorize("hasAuthority('animal:invalidate')")
     public Result<Boolean> invalidate(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("animal", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废失败");
         } catch (BusinessException e) {

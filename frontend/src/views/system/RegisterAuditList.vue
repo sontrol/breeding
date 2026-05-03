@@ -152,7 +152,7 @@ const handleApprove = async (row: RegisterAuditRecord) => {
     type: 'warning'
   })
   await request.post('/register-audit/approve', {
-    userId: row.id,
+    registerId: row.id,
     auditRemark: '审核通过'
   })
   ElMessage.success('审核通过')
@@ -171,7 +171,7 @@ const handleReject = () => {
       return
     }
     await request.post('/register-audit/reject', {
-      userId: currentRejectUserId.value,
+      registerId: currentRejectUserId.value,
       auditRemark: rejectForm.auditRemark
     })
     ElMessage.success('已驳回注册申请')

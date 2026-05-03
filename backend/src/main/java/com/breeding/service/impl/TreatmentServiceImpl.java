@@ -107,6 +107,12 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
                 TreatmentItem singleItem = new TreatmentItem();
                 singleItem.setInventoryId(dto.getMedicineId());
                 singleItem.setDosage(dto.getDosage());
+                // 从库存填充物品名称和类型
+                Inventory inv = inventoryService.getById(dto.getMedicineId());
+                if (inv != null) {
+                    singleItem.setItemName(inv.getItemName());
+                    singleItem.setItemType(inv.getItemType());
+                }
                 dto.setItems(List.of(singleItem));
             }
         }
