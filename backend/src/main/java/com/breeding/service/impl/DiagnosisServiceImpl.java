@@ -13,6 +13,7 @@ import com.breeding.service.SymptomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 
 @Service
 public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis> implements DiagnosisService {
@@ -27,21 +28,24 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
     public Page<Diagnosis> getDiagnosisPage(int pageNum, int pageSize, Long animalId, String diseaseName) {
         Page<Diagnosis> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Diagnosis> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (animalId != null) {
             wrapper.eq(Diagnosis::getAnimalId, animalId);
         }
         if (diseaseName != null && !diseaseName.isEmpty()) {
             wrapper.like(Diagnosis::getDiseaseName, diseaseName);
         }
-        
+
         wrapper.orderByDesc(Diagnosis::getDiagnoseTime);
         return this.page(page, wrapper);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean save(Diagnosis diagnosis) {
+    public boolean addWithDiagnosis(Diagnosis diagnosis) {
+        if (diagnosis.getDiagnoseTime() == null) {
+            diagnosis.setDiagnoseTime(LocalDateTime.now());
+        }
         boolean saved = super.save(diagnosis);
         if (saved) {
             if (diagnosis.getSymptomId() != null) {

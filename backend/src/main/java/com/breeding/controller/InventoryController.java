@@ -43,7 +43,7 @@ public class InventoryController {
     @PostMapping
     @PreAuthorize("hasAuthority('inventory:add')")
     public Result<Boolean> add(@Valid @RequestBody Inventory inventory) {
-        return inventoryService.save(inventory) ? Result.success() : Result.error("入库失败");
+        return inventoryService.addWithLog(inventory) ? Result.success() : Result.error("入库失败");
     }
 
     @PutMapping

@@ -29,7 +29,7 @@ public class InvalidDataController {
 
     private static final List<String> ALL_DATA_TYPES = List.of(
             "animal", "feeding_plan", "feeding_record", "symptom",
-            "diagnosis", "treatment", "inventory", "alert");
+            "diagnosis", "treatment", "inventory", "alert", "vaccine_record");
 
     @GetMapping("/page")
     @PreAuthorize("hasAuthority('system:invalid:view')")

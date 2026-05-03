@@ -7,6 +7,8 @@ import com.breeding.entity.Inventory;
 import java.math.BigDecimal;
 
 public interface InventoryService extends IService<Inventory> {
+    boolean addWithLog(Inventory inventory);
+
     Page<Inventory> getInventoryPage(int page, int size, String itemName, Integer ItemType);
 
     boolean deductInventory(Long inventoryId, BigDecimal quantity, Long operatorId, String remark);

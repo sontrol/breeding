@@ -7,6 +7,7 @@ import com.breeding.common.BusinessException;
 import com.breeding.dto.treatment.TreatmentAddDTO;
 import com.breeding.entity.Animal;
 import com.breeding.entity.Diagnosis;
+import com.breeding.entity.Event;
 import com.breeding.entity.Inventory;
 import com.breeding.entity.Treatment;
 import com.breeding.entity.TreatmentItem;
@@ -14,6 +15,7 @@ import com.breeding.mapper.TreatmentItemMapper;
 import com.breeding.mapper.TreatmentMapper;
 import com.breeding.service.AnimalService;
 import com.breeding.service.DiagnosisService;
+import com.breeding.service.EventService;
 import com.breeding.service.InventoryService;
 import com.breeding.service.TreatmentService;
 import com.breeding.vo.TreatmentVO;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,6 +43,9 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
 
     @Autowired
     private AnimalService animalService;
+
+    @Autowired
+    private EventService eventService;
 
     @Override
     public Page<TreatmentVO> getTreatmentPage(int pageNum, int pageSize, Long animalId, Long diagnosisId) {
@@ -91,7 +97,7 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
         Treatment treatment = new Treatment();
         treatment.setDiagnosisId(dto.getDiagnosisId());
         treatment.setAnimalId(dto.getAnimalId());
-        treatment.setOperatorId(operatorId);
+        treatment.setOperatorId(operatorId != null ? operatorId : dto.getOperatorId());
         treatment.setMedicineId(dto.getMedicineId());
         treatment.setTime(dto.getTime());
         treatment.setResult(dto.getResult());
@@ -116,6 +122,12 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
                 if (item == null || item.getInventoryId() == null) {
                     throw new BusinessException("治疗药品明细数据不完整");
                 }
+                // 从库存表解析 itemName 和 itemType
+                Inventory inventory = inventoryService.getById(item.getInventoryId());
+                if (inventory != null) {
+                    item.setItemName(inventory.getItemName());
+                    item.setItemType(inventory.getItemType());
+                }
                 inventoryService.deductInventory(
                     item.getInventoryId(),
                     item.getDosage(),
@@ -124,9 +136,9 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
                 );
             }
         }
-        
+
         boolean saved = this.save(treatment);
-        
+
         if (saved && dto.getItems() != null && !dto.getItems().isEmpty()) {
             for (TreatmentItem item : dto.getItems()) {
                 if (item != null) {
@@ -134,6 +146,10 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
                     treatmentItemMapper.insert(item);
                 }
             }
+        }
+
+        if (saved) {
+            createTreatmentEvent(treatment, dto);
         }
 
         if (saved && dto.getDiagnosisId() != null && dto.getDiagnosisStatus() != null) {
@@ -149,13 +165,36 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
                             animal.setStatus(1);
                         } else if (dto.getDiagnosisStatus() == 2) {
                             animal.setStatus(4);
+                            createDeathEvent(treatment, dto);
                         }
                         animalService.updateById(animal);
                     }
                 }
             }
         }
-        
+
         return saved;
+    }
+
+    private void createTreatmentEvent(Treatment treatment, TreatmentAddDTO dto) {
+        Event event = new Event();
+        event.setAnimalId(treatment.getAnimalId());
+        event.setEventType(3); // 治疗
+        event.setEventTime(treatment.getTime() != null ? treatment.getTime() : LocalDateTime.now());
+        event.setOperatorId(treatment.getOperatorId());
+        event.setDescription("治疗记录 - 动物ID:" + treatment.getAnimalId() + ", 诊断ID:" + dto.getDiagnosisId() + ", 结果:" + dto.getResult());
+        event.setRelatedId(treatment.getId());
+        eventService.save(event);
+    }
+
+    private void createDeathEvent(Treatment treatment, TreatmentAddDTO dto) {
+        Event event = new Event();
+        event.setAnimalId(treatment.getAnimalId());
+        event.setEventType(5); // 死亡
+        event.setEventTime(LocalDateTime.now());
+        event.setOperatorId(treatment.getOperatorId());
+        event.setDescription("动物死亡 - 动物ID:" + treatment.getAnimalId() + ", 诊断ID:" + dto.getDiagnosisId());
+        event.setRelatedId(treatment.getId());
+        eventService.save(event);
     }
 }

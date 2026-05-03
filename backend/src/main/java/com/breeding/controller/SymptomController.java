@@ -38,10 +38,7 @@ public class SymptomController {
     @PostMapping
     @PreAuthorize("hasAuthority('disease:add')")
     public Result<Boolean> add(@Valid @RequestBody Symptom symptom) {
-        LoginUser loginUser = LoginUser.getCurrentUser();
-        symptom.setObserverId(loginUser.getUser().getId());
-        symptom.setObserveTime(LocalDateTime.now());
-        return symptomService.save(symptom) ? Result.success() : Result.error("上报症状失败");
+        return symptomService.addWithEvent(symptom) ? Result.success() : Result.error("上报症状失败");
     }
 
     @PutMapping("/invalidate/{id}")
