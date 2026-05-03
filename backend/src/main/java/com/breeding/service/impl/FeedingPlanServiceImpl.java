@@ -13,6 +13,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.sql.Time;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,6 +24,17 @@ public class FeedingPlanServiceImpl extends ServiceImpl<FeedingPlanMapper, Feedi
 
     @Autowired
     private InventoryService inventoryService;
+
+    @Override
+    public boolean save(FeedingPlan plan) {
+        if (plan.getAmountPerAnimal() == null) {
+            plan.setAmountPerAnimal(BigDecimal.ZERO);
+        }
+        if (plan.getFeedingTime() == null) {
+            plan.setFeedingTime(Time.valueOf("08:00:00"));
+        }
+        return super.save(plan);
+    }
 
     @Override
     public Page<FeedingPlanVO> getPlanPage(int pageNum, int pageSize, Long shedId, Integer status) {

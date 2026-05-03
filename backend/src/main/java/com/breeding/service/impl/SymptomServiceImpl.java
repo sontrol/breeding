@@ -39,6 +39,9 @@ public class SymptomServiceImpl extends ServiceImpl<SymptomMapper, Symptom> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean addWithEvent(Symptom symptom) {
+        if (symptom.getObserveTime() == null) {
+            symptom.setObserveTime(LocalDateTime.now());
+        }
         boolean saved = super.save(symptom);
         if (saved) {
             createDiseaseEvent(symptom);
