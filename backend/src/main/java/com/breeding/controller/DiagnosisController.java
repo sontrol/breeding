@@ -37,7 +37,7 @@ public class DiagnosisController {
     @PostMapping
     @PreAuthorize("hasAuthority('diagnosis:add')")
     public Result<Boolean> add(@Valid @RequestBody Diagnosis diagnosis) {
-        return diagnosisService.save(diagnosis) ? Result.success() : Result.error("诊断记录保存失败");
+        return diagnosisService.addWithDiagnosis(diagnosis) ? Result.success() : Result.error("诊断记录保存失败");
     }
 
     @PutMapping("/invalidate/{id}")

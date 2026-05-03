@@ -68,7 +68,7 @@ breeding/
 - 安装 MySQL 8.x
 - 创建数据库：`CREATE DATABASE breeding_sys DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
 - 导入脚本：依次执行 `docs/schema.sql` 与 `docs/ai_audit.sql`
-- 默认管理员账号：`admin`，密码：`password`
+- 默认管理员账号：`admin`，密码：`123456`
 
 ### 2. 后端服务启动
 1. 检查 `backend/src/main/resources/application.yml` 中的 MySQL 账号密码是否与本地一致。
@@ -89,7 +89,7 @@ breeding/
    ```bash
    npm run dev
    ```
-3. 打开浏览器访问 `http://localhost:3000` (或控制台提示的端口)，使用 `admin` / `password` 登录。
+3. 打开浏览器访问 `http://localhost:3000` (或控制台提示的端口)，使用 `admin` / `123456` 登录。
 
 ## 主要模块演示
 

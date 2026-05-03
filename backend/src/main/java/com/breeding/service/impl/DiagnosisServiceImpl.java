@@ -41,7 +41,7 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean save(Diagnosis diagnosis) {
+    public boolean addWithDiagnosis(Diagnosis diagnosis) {
         boolean saved = super.save(diagnosis);
         if (saved) {
             if (diagnosis.getSymptomId() != null) {

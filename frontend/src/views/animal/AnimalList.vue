@@ -79,6 +79,11 @@
             <el-option label="母" :value="2" />
           </el-select>
         </el-form-item>
+        <el-form-item label="所属栏舍" prop="shedId">
+          <el-select v-model="form.shedId" placeholder="请选择栏舍" filterable clearable>
+            <el-option v-for="shed in shedOptions" :key="shed.id" :label="shed.name" :value="shed.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="form.status" placeholder="请选择状态">
             <el-option label="健康" :value="1" />
@@ -172,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import { formatDate } from '@/utils/date'
@@ -221,11 +226,27 @@ interface AnimalDetailResponse {
   treatmentList: TreatmentRecord[]
 }
 
+const shedOptions = ref<any[]>([])
 const open = ref(false)
 const title = ref('')
 const formRef = ref()
 const detailOpen = ref(false)
 const detailLoading = ref(false)
+
+const loadShedOptions = async () => {
+  try {
+    const res: any = await request.get('/shed/list')
+    if (res.code === 200) {
+      shedOptions.value = res.data || []
+    }
+  } catch (e) {
+    console.error('获取栏舍列表失败', e)
+  }
+}
+
+onMounted(() => {
+  loadShedOptions()
+})
 const detailAnimal = ref<AnimalRecord | null>(null)
 const detailCanViewDiseaseRecords = ref(false)
 const symptomLoading = ref(false)
@@ -246,6 +267,7 @@ const form = reactive({
   species: '',
   variety: '',
   gender: 1,
+  shedId: undefined as number | undefined,
   status: 1
 })
 
@@ -261,13 +283,13 @@ const { loading, list: animalList, total, getList, resetQuery, handleQuery, hand
 const { reset, submitForm: crudSubmit } = useCrudDialog('/animal', getList, { addSuccessMessage: '添加成功' })
 
 const handle新增 = () => {
-  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
+  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, shedId: undefined, status: 1 })
   open.value = true
   title.value = '添加动物'
 }
 
 const handleUpdate = (row: any) => {
-  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
+  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, shedId: undefined, status: 1 })
   Object.assign(form, row)
   open.value = true
   title.value = '修改动物'
@@ -275,7 +297,7 @@ const handleUpdate = (row: any) => {
 
 const cancel = () => {
   open.value = false
-  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
+  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, shedId: undefined, status: 1 })
 }
 
 const handleDetail = async (row: AnimalRecord) => {
