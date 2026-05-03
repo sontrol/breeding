@@ -17,7 +17,7 @@ public class CorsConfig {
         config.setAllowedOriginPatterns(Collections.singletonList("*")); // 允许所有域名
         config.setAllowedMethods(Collections.singletonList("*"));        // 允许所有请求方法
         config.setAllowedHeaders(Collections.singletonList("*"));        // 允许所有请求头
-        config.setAllowCredentials(true);                                // 允许携带凭证(Cookie)
+        config.setAllowCredentials(false);                               // 不允许携带凭证(Cookie)
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);                 // 对所有路径生效

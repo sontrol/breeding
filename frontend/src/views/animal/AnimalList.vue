@@ -282,7 +282,7 @@ const { loading, list: animalList, total, getList, resetQuery, handleQuery, hand
 
 const { reset, submitForm: crudSubmit } = useCrudDialog('/animal', getList, { addSuccessMessage: '添加成功' })
 
-const handle新增 = () => {
+const handleAdd = () => {
   reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, shedId: undefined, status: 1 })
   open.value = true
   title.value = '添加动物'

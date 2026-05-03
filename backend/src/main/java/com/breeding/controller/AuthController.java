@@ -8,6 +8,8 @@ import com.breeding.service.RegisterService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,8 @@ import java.util.Map;
 @RequestMapping("/auth")
 @CrossOrigin // 允许跨域
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -59,12 +63,8 @@ public class AuthController {
 
             return Result.success(data);
         } catch (RuntimeException e) {
-            e.printStackTrace();
-            String message = e.getMessage();
-            if (message == null || message.isBlank()) {
-                message = "用户名或密码错误";
-            }
-            return Result.error("登录失败: " + message);
+            log.warn("登录失败 username={}", loginDTO.getUsername(), e);
+            return Result.error("用户名或密码错误");
         }
     }
 
