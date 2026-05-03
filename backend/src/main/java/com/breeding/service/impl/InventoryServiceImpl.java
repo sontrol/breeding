@@ -6,14 +6,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.breeding.common.BusinessException;
 import com.breeding.common.LoginUser;
 import com.breeding.entity.Inventory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import com.breeding.entity.InventoryLog;
 import com.breeding.mapper.InventoryLogMapper;
 import com.breeding.mapper.InventoryMapper;
 import com.breeding.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,12 +42,7 @@ public class InventoryServiceImpl extends ServiceImpl<InventoryMapper, Inventory
     }
 
     private Long resolveOperatorId() {
-        try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            return loginUser.getUser().getId();
-        } catch (Exception e) {
-            return null;
-        }
+        return LoginUser.getCurrentUser().getUser().getId();
     }
 
     @Override

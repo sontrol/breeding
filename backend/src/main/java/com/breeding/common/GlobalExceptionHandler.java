@@ -5,12 +5,16 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 全局异常处理
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * 处理无权限访问异常
@@ -30,7 +34,8 @@ public class GlobalExceptionHandler {
         if (msg != null && msg.contains("Duplicate entry")) {
             return Result.error("提交的数据已存在，请检查唯一性字段（如用户名、耳标号、批次号等）");
         }
-        return Result.error("数据库操作约束异常: " + msg);
+        log.warn("数据库操作约束异常", e);
+        return Result.error("数据库操作约束异常");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -56,7 +61,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public Result<String> handleException(Exception e) {
-        e.printStackTrace();
-        return Result.error("系统内部异常: " + e.getMessage());
+        log.error("系统内部异常", e);
+        return Result.error("系统内部异常");
     }
 }
