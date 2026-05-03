@@ -56,7 +56,6 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
-import request from '@/api/request'
 import { formatDate } from '@/utils/date'
 import { usePagination } from '@/composables/usePagination'
 

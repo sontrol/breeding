@@ -18,7 +18,7 @@
         <el-form-item>
           <el-button type="primary" @click="handleQuery" icon="Search">查询</el-button>
           <el-button @click="resetQuery('earTag', 'status')" icon="Refresh">重置</el-button>
-          <el-button type="success" @click="handle新增" icon="Plus" v-if="hasPerm('animal:add')">新增</el-button>
+          <el-button type="success" @click="handleAdd" icon="Plus" v-if="hasPerm('animal:add')">新增</el-button>
         </el-form-item>
       </el-form>
 
@@ -260,7 +260,7 @@ const { loading, list: animalList, total, getList, resetQuery, handleQuery, hand
 
 const { reset, submitForm: crudSubmit } = useCrudDialog('/animal', getList, { addSuccessMessage: '添加成功' })
 
-const handle新增 = () => {
+const handleAdd = () => {
   reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
   open.value = true
   title.value = '添加动物'
@@ -271,11 +271,6 @@ const handleUpdate = (row: any) => {
   Object.assign(form, row)
   open.value = true
   title.value = '修改动物'
-}
-
-const cancel = () => {
-  open.value = false
-  reset(form, formRef, { id: undefined, earTag: '', species: '', variety: '', gender: 1, status: 1 })
 }
 
 const handleDetail = async (row: AnimalRecord) => {

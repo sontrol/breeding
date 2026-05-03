@@ -75,7 +75,7 @@ public class VaccineController {
     @PostMapping("/record")
     @PreAuthorize("hasAuthority('vaccine:add')")
     public Result<Boolean> addRecord(@Valid @RequestBody VaccineRecord record) {
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LoginUser loginUser = LoginUser.getCurrentUser();
         record.setOperatorId(loginUser.getUser().getId());
         return vaccineRecordService.save(record) ? Result.success() : Result.error("新增接种记录失败");
     }
@@ -84,7 +84,7 @@ public class VaccineController {
     @PreAuthorize("hasAuthority('vaccine:invalidate')")
     public Result<Boolean> invalidateRecord(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("vaccine_record", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废接种记录失败");
         } catch (BusinessException e) {

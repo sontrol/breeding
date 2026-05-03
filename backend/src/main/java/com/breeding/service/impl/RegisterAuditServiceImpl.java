@@ -60,7 +60,7 @@ public class RegisterAuditServiceImpl implements RegisterAuditService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approve(RegisterAuditDTO auditDTO, Long auditorId) {
-        User user = getPendingUser(auditDTO.getUserId());
+        User user = getPendingUser(auditDTO.getRegisterId());
         String roleCode = user.getApplyRoleCode();
         if (!UserRoleConstants.isRegisterRole(roleCode)) {
             throw new IllegalArgumentException("待审核用户的申请角色不合法");
@@ -85,7 +85,7 @@ public class RegisterAuditServiceImpl implements RegisterAuditService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void reject(RegisterAuditDTO auditDTO, Long auditorId) {
-        User user = getPendingUser(auditDTO.getUserId());
+        User user = getPendingUser(auditDTO.getRegisterId());
 
         User updateUser = new User();
         updateUser.setId(user.getId());

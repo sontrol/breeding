@@ -96,13 +96,11 @@
             <el-icon><List /></el-icon>
             <span>事件中心</span>
           </el-menu-item>
+          <el-menu-item index="/ai/chat" v-if="hasPerm('ai:view')">
+            <el-icon><Monitor /></el-icon>
+            <span>AI 助手</span>
+          </el-menu-item>
         </el-menu>
-      </div>
-      <div class="sidebar-footer" v-if="hasPerm('ai:view')">
-        <router-link to="/ai/chat" class="ai-btn">
-          <el-icon><Monitor /></el-icon>
-          <span>AI 助手</span>
-        </router-link>
       </div>
     </el-aside>
     <el-container>

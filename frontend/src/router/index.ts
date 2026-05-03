@@ -245,6 +245,12 @@ router.beforeEach((to, from, next) => {
   // 简单的动态路由注入逻辑
   if (!userStore.hasAddedRoutes) {
     const permissions = userStore.permissions || []
+    // 清除旧动态路由，防止权限升级
+    dynamicRoutes.forEach(route => {
+      if (route.name && router.hasRoute(route.name)) {
+        router.removeRoute(route.name)
+      }
+    })
     dynamicRoutes.forEach(route => {
       // 基于 permission 码判断权限
       if (route.meta?.permission) {

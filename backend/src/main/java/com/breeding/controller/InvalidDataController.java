@@ -67,7 +67,7 @@ public class InvalidDataController {
     @PreAuthorize("hasAuthority('system:invalid:restore')")
     public Result<Boolean> restore(@RequestParam String dataType, @RequestParam Long dataId) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             return invalidDataService.restore(dataType, dataId, loginUser.getUser().getId()) ? Result.success() : Result.error("恢复失败");
         } catch (BusinessException e) {
             return Result.error(e.getMessage());

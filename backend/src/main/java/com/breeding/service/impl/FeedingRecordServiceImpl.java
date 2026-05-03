@@ -51,6 +51,7 @@ public class FeedingRecordServiceImpl extends ServiceImpl<FeedingRecordMapper, F
                 "饲养投喂消耗 - 栏舍ID:" + record.getShedId()
             );
         }
+        record.setOperatorId(operatorId);
         return this.save(record);
     }
 }

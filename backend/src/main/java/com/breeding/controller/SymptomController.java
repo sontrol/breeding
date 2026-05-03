@@ -10,8 +10,9 @@ import com.breeding.service.SymptomService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/symptom")
@@ -37,6 +38,9 @@ public class SymptomController {
     @PostMapping
     @PreAuthorize("hasAuthority('disease:add')")
     public Result<Boolean> add(@Valid @RequestBody Symptom symptom) {
+        LoginUser loginUser = LoginUser.getCurrentUser();
+        symptom.setObserverId(loginUser.getUser().getId());
+        symptom.setObserveTime(LocalDateTime.now());
         return symptomService.save(symptom) ? Result.success() : Result.error("上报症状失败");
     }
 
@@ -44,7 +48,7 @@ public class SymptomController {
     @PreAuthorize("hasAuthority('symptom:invalidate')")
     public Result<Boolean> invalidate(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("symptom", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废症状失败");
         } catch (BusinessException e) {

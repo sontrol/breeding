@@ -60,7 +60,7 @@ public class UserController {
     @PreAuthorize("hasAuthority('system:user:delete')")
     public Result<Boolean> delete(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             if (id.equals(loginUser.getUser().getId())) {
                 return Result.error("不能作废自己的账号");
             }

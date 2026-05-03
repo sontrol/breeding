@@ -2,8 +2,10 @@ package com.breeding.common;
 
 import com.breeding.entity.User;
 import lombok.Data;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
@@ -56,5 +58,16 @@ public class LoginUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return user.getStatus() == 1;
+    }
+
+    /**
+     * 从 SecurityContext 获取当前登录用户，调用方应确保已通过 @PreAuthorize 鉴权
+     */
+    public static LoginUser getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof LoginUser loginUser) {
+            return loginUser;
+        }
+        throw new BusinessException("认证信息无效，请重新登录");
     }
 }

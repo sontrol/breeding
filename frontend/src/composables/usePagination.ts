@@ -33,7 +33,7 @@ export function usePagination<T>(
 
   const resetQuery = (...fields: string[]) => {
     for (const field of fields) {
-      queryParams[field] = undefined
+      delete queryParams[field]
     }
     handleQuery()
   }

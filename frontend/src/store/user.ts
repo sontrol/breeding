@@ -30,7 +30,10 @@ export const useUserStore = defineStore('user', () => {
     roles.value = []
     permissions.value = []
     hasAddedRoutes.value = false
-    localStorage.clear()
+    localStorage.removeItem('token')
+    localStorage.removeItem('userInfo')
+    localStorage.removeItem('roles')
+    localStorage.removeItem('permissions')
   }
 
   return { token, userInfo, roles, permissions, hasAddedRoutes, setAuthData, setHasAddedRoutes, logout }

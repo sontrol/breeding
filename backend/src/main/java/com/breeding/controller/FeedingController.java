@@ -71,7 +71,7 @@ public class FeedingController {
     @PreAuthorize("hasAuthority('feeding:plan:invalidate')")
     public Result<Boolean> invalidatePlan(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("feeding_plan", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废计划失败");
         } catch (BusinessException e) {
@@ -94,7 +94,7 @@ public class FeedingController {
     @PreAuthorize("hasAuthority('feeding:record:add')")
     public Result<Boolean> addRecord(@Valid @RequestBody FeedingRecord record) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             return recordService.addRecordWithInventory(record, loginUser.getUser().getId()) ? Result.success() : Result.error("新增记录失败");
         } catch (BusinessException e) {
             return Result.error(e.getMessage());
@@ -105,7 +105,7 @@ public class FeedingController {
     @PreAuthorize("hasAuthority('feeding:record:invalidate')")
     public Result<Boolean> invalidateRecord(@PathVariable Long id) {
         try {
-            LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            LoginUser loginUser = LoginUser.getCurrentUser();
             boolean success = invalidDataService.invalidate("feeding_record", id, loginUser.getUser().getId(), loginUser.getUser().getRealName());
             return success ? Result.success() : Result.error("作废记录失败");
         } catch (BusinessException e) {

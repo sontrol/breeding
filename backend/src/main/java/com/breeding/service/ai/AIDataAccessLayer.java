@@ -66,7 +66,7 @@ public class AIDataAccessLayer {
      * 根据当前用户权限，获取AI可分析的上下文数据摘要
      */
     public Map<String, Object> getAccessibleContextData() {
-        LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        LoginUser loginUser = LoginUser.getCurrentUser();
         List<String> permissions = loginUser.getPermissions();
         
         Map<String, Object> contextData = new LinkedHashMap<>();

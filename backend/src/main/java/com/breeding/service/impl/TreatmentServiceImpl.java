@@ -7,6 +7,7 @@ import com.breeding.common.BusinessException;
 import com.breeding.dto.treatment.TreatmentAddDTO;
 import com.breeding.entity.Animal;
 import com.breeding.entity.Diagnosis;
+import com.breeding.entity.Inventory;
 import com.breeding.entity.Treatment;
 import com.breeding.entity.TreatmentItem;
 import com.breeding.mapper.TreatmentItemMapper;
@@ -90,7 +91,7 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
         Treatment treatment = new Treatment();
         treatment.setDiagnosisId(dto.getDiagnosisId());
         treatment.setAnimalId(dto.getAnimalId());
-        treatment.setOperatorId(dto.getOperatorId());
+        treatment.setOperatorId(operatorId);
         treatment.setMedicineId(dto.getMedicineId());
         treatment.setTime(dto.getTime());
         treatment.setResult(dto.getResult());
@@ -100,6 +101,12 @@ public class TreatmentServiceImpl extends ServiceImpl<TreatmentMapper, Treatment
                 TreatmentItem singleItem = new TreatmentItem();
                 singleItem.setInventoryId(dto.getMedicineId());
                 singleItem.setDosage(dto.getDosage());
+                // 从库存填充物品名称和类型
+                Inventory inv = inventoryService.getById(dto.getMedicineId());
+                if (inv != null) {
+                    singleItem.setItemName(inv.getItemName());
+                    singleItem.setItemType(inv.getItemType());
+                }
                 dto.setItems(List.of(singleItem));
             }
         }
