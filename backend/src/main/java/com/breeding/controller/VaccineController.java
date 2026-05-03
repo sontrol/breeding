@@ -77,7 +77,7 @@ public class VaccineController {
     public Result<Boolean> addRecord(@Valid @RequestBody VaccineRecord record) {
         LoginUser loginUser = (LoginUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         record.setOperatorId(loginUser.getUser().getId());
-        return vaccineRecordService.save(record) ? Result.success() : Result.error("新增接种记录失败");
+        return vaccineRecordService.addWithEvent(record) ? Result.success() : Result.error("新增接种记录失败");
     }
 
     @PutMapping("/record/invalidate/{id}")
