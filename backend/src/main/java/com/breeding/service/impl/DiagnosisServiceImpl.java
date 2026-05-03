@@ -13,6 +13,7 @@ import com.breeding.service.SymptomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 
 @Service
 public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis> implements DiagnosisService {
@@ -42,6 +43,9 @@ public class DiagnosisServiceImpl extends ServiceImpl<DiagnosisMapper, Diagnosis
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean save(Diagnosis diagnosis) {
+        if (diagnosis.getDiagnoseTime() == null) {
+            diagnosis.setDiagnoseTime(LocalDateTime.now());
+        }
         boolean saved = super.save(diagnosis);
         if (saved) {
             if (diagnosis.getSymptomId() != null) {

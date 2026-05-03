@@ -58,6 +58,9 @@ public class InvalidDataServiceImpl implements InvalidDataService {
                 null
         );
 
+        // 级联作废子数据
+        cascadeInvalidate(dataType, dataId, operatorId, operatorName);
+
         return true;
     }
 
@@ -144,6 +147,33 @@ public class InvalidDataServiceImpl implements InvalidDataService {
         return meta;
     }
 
+    // 级联规则: 父数据类型 -> [{子数据类型, 外键列名}]
+    private static final Map<String, List<CascadeRule>> CASCADE_RULES = buildCascadeRules();
+
+    private record CascadeRule(String childDataType, String foreignKeyColumn) {}
+
+    private static Map<String, List<CascadeRule>> buildCascadeRules() {
+        Map<String, List<CascadeRule>> rules = new HashMap<>();
+        rules.put("symptom", List.of(new CascadeRule("diagnosis", "symptom_id")));
+        rules.put("diagnosis", List.of(new CascadeRule("treatment", "diagnosis_id")));
+        return rules;
+    }
+
+    private void cascadeInvalidate(String dataType, Long dataId, Long operatorId, String operatorName) {
+        List<CascadeRule> childRules = CASCADE_RULES.get(dataType);
+        if (childRules == null) return;
+
+        for (CascadeRule rule : childRules) {
+            List<Long> childIds = jdbcTemplate.queryForList(
+                    "SELECT id FROM " + getArchiveMeta(rule.childDataType).tableName
+                            + " WHERE " + rule.foreignKeyColumn + " = ? AND deleted = 0",
+                    Long.class, dataId);
+            for (Long childId : childIds) {
+                invalidate(rule.childDataType, childId, operatorId, operatorName);
+            }
+        }
+    }
+
     private static final Map<String, ArchiveMeta> ARCHIVE_META_MAP = buildArchiveMetaMap();
     private static final Set<String> ARCHIVE_TABLE_NAME_WHITELIST = buildArchiveTableNameWhitelist();
 
@@ -165,6 +195,8 @@ public class InvalidDataServiceImpl implements InvalidDataService {
                 "CONCAT(IFNULL(item_name, '-'), ' / 批次:', IFNULL(batch_number, '-'))"));
         map.put("alert", new ArchiveMeta("alert", "预警消息",
                 "CONCAT('预警#', id, ' / 类型:', " + buildAlertRuleTypeDisplaySql() + ")"));
+        map.put("vaccine_record", new ArchiveMeta("vaccine_record", "免疫接种记录",
+                "CONCAT('免疫#', id, ' / 动物:', IFNULL(animal_id, '-'), ' / 批次:', IFNULL(batch_number, '-'))"));
         return map;
     }
 
